@@ -1,0 +1,17 @@
+{
+  "name": "cozycode",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A cozy idle world of little critters (game layer).",
+  "scripts": {
+    "build": "node tools/build.mjs",
+    "watch": "node tools/build.mjs --watch",
+    "serve": "node tools/serve.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2"
+  },
+  "dependencies": {
+    "three": "^0.186.1"
+  }
+}

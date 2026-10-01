@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Critter Studio · Cozy Code</title>
+    <link rel="stylesheet" href="dist/fonts.css" />
+    <link rel="stylesheet" href="dist/studio.css" />
+  </head>
+  <body>
+    <div id="app"></div>
+    <div id="bubbles"></div>
+
+    <header class="studio-head">
+      <a class="back" href="index.html">← back to the nook</a>
+      <h1>Critter Studio</h1>
+      <p>meet a sproutling up close</p>
+    </header>
+
+    <aside id="actions" class="panel left"></aside>
+
+    <aside id="look" class="panel right">
+      <div class="who">
+        <canvas id="portrait" width="96" height="96"></canvas>
+        <div>
+          <div id="name">Mochi</div>
+          <div class="sub">sproutling</div>
+        </div>
+      </div>
+      <div id="traits"></div>
+      <h3>Color</h3>
+      <div class="swatches"></div>
+      <h3>Top</h3>
+      <div class="btns accessories"></div>
+      <h3>Mood</h3>
+      <div class="btns moods"></div>
+      <h3>Stage</h3>
+      <div class="btns">
+        <button id="friends">+ invite a friend</button>
+        <button id="wander">let them wander</button>
+        <button id="sound">sound</button>
+      </div>
+    </aside>
+
+    <footer class="hint">
+      <img id="hint-heart" alt="" />
+      <span><b>click</b> to boop · <b>rub</b> to pet · <b>drag</b> to pick up · drag the background to turn</span>
+    </footer>
+
+    <script src="dist/studio.js"></script>
+  </body>
+</html>
