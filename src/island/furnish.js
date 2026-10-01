@@ -90,6 +90,8 @@ function commons() {
   // a hand-drawn map + the crew roster on the west wall
   k.mount(P.paperMap(0.95, 0.7), 'west', 1.6, 1.6, 'map');
   k.mount(P.rosterFrame(0.9, 0.6), 'west', 5.05, 1.75, 'roster');
+  // keepsakes live above the boarded door: empty slots invite filling
+  k.mount(P.keepsakeShelf(1.9, 1, 6), 'north', 3.6, 2.5, 'keepsakes');
   // the pitch rug in the middle, where crew stand to present
   const rug = k.place(P.pitchRug(1.2), { x: 2.55, z: 3.3, name: 'rug' });
   rug.rotation.y = PI / 4; // spots arc toward the default camera
@@ -142,8 +144,6 @@ function workshop() {
   // offcuts and a crate
   k.place(P.movingBoxes(9, 2), { x: 5.2, z: -1.0, footprint: { w: 1.2, d: 0.7 } });
   k.station({ id: 'tinker-ws', label: 'tidying the tools', activity: 'tinker', pos: { x: 1.35, z: -0.75 }, face: 0, tags: ['build', 'fun'] });
-  // ladder to the attic lives in the NW corner
-  k.footprints.push({ x: 0.7, z: -5.55, w: 0.7, d: 0.5 });
   return k;
 }
 
@@ -233,7 +233,8 @@ function bunk() {
 
 function yours() {
   const k = new RoomKit('yours', 1);
-  k.mount(P.keepsakeShelf(1.7, 2, 5), 'east', -1.4, 0.95, 'keepsakes');
+  // a shelf for things about you (stated = solid, inferred = ghostly outlines)
+  k.mount(P.slotShelf({ w: 1.7, rows: 2, perRow: 4, gap: 0.5, color: '#cbb193' }), 'east', -1.4, 0.95, 'factShelf');
   k.place(P.simpleBed(1.4, 1.9, '#d9cbe0'), { x: -4.9, z: -1.35, rot: PI / 2, footprint: { w: 1.5, d: 2.0 }, name: 'bed', movable: true });
   k.place(P.factTable(1.4, 0.7), { x: -3.2, z: -4.2, footprint: { w: 1.45, d: 0.75 }, name: 'facts' });
   k.objects.factFloor = [
@@ -331,6 +332,7 @@ function underside() {
   led.position.set(cx - 0.3, y0 + 0.06, cz + 0.55);
   led.rotation.y = PI / 5;
   g.add(led);
+  led.userData.interactive = { kind: 'ledger' };
   k.objects.ledger = led;
   // a lantern so it's never pitch dark
   const lantern = new THREE.PointLight('#ffcf8a', 3, 6, 1.5);

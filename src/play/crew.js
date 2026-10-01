@@ -13,6 +13,7 @@ import { sound } from '../core/audio.js';
 import { rand, chance, pick, clamp, uid } from '../core/util.js';
 import { mat, uniqueMat } from '../gfx/materials.js';
 import { sphere, cyl, mesh } from '../gfx/geo.js';
+import { clock } from './clock.js';
 
 export const ROLES = {
   ideas: { title: 'ideas', accessory: 'sprout', likes: { ideas: 1, fun: 0.6, social: 0.4 } },
@@ -137,7 +138,7 @@ export class Crew {
   /** Make the starting crew if this is a brand new island. */
   ensureStartingCrew() {
     if (this.members.length) return;
-    const now = Date.now();
+    const now = clock.now();
     for (const d of STARTING_CREW) this.members.push({ id: uid('crew'), joinedAt: now, ...d });
     this.pickNightOwl();
   }
@@ -153,7 +154,7 @@ export class Crew {
       role,
       color,
       seed: Math.floor(Math.random() * 1e6),
-      joinedAt: Date.now(),
+      joinedAt: clock.now(),
       traits: opts.traits,
       pos: opts.pos || { level: 0, x: -1, z: 8.5 },
       ...opts.extra,
@@ -430,7 +431,7 @@ export class Crew {
 
   _updateBulb(c, dt, t) {
     const b = c.bulb;
-    const want = c.member.present && !this.onRugNow(c) && c.mainAction?.name !== 'sleep' ? 1 : 0;
+    const want = c.member.present && !this.onRugNow(c) && c.mainAction?.name !== 'sleep' && !c.held ? 1 : 0;
     b.userData.k = clamp(b.userData.k + (want ? dt * 3 : -dt * 4));
     const k = b.userData.k;
     b.visible = k > 0.01;

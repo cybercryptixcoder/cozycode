@@ -185,6 +185,9 @@ export const TIME_PRESETS = [
 ];
 
 export class Daylight {
+  /** Clock hook (the island game shifts it for testing). */
+  static now = () => Date.now();
+
   constructor(engine) {
     this.engine = engine;
     const scene = engine.scene;
@@ -240,7 +243,7 @@ export class Daylight {
 
   currentHour() {
     if (this.override !== null) return this.override;
-    const d = new Date();
+    const d = new Date(Daylight.now());
     return d.getHours() + d.getMinutes() / 60 + d.getSeconds() / 3600;
   }
 

@@ -19,11 +19,11 @@ export function structureFor(unlocks) {
   const u = (k) => !!unlocks[k];
   const built = ['commons'];
   const sealed = [];
-  if (u('workshop')) built.push('workshop', 'attic');
+  if (u('workshop')) built.push('workshop');
   else sealed.push('workshop');
   if (u('study')) built.push('study');
   if (u('kitchen')) built.push('kitchen');
-  if (u('upstairs')) built.push('bunk', 'yours');
+  if (u('upstairs')) built.push('bunk', 'yours', 'attic');
   const chunks = ['core'];
   if (u('study') || u('kitchen')) chunks.push('west');
   if (u('gate')) chunks.push('gate');
@@ -102,7 +102,7 @@ export class IslandWorld {
     // fence + mist where the gate will be, until it exists
     if (!st.chunks.includes('gate')) {
       if (!this.mist) {
-        this.mist = buildMist(CHUNKS.gate.cx, CHUNKS.gate.cz, CHUNKS.gate.hx * 0.95, CHUNKS.gate.hz * 0.9, 16, 4);
+        this.mist = buildMist(CHUNKS.gate.cx, CHUNKS.gate.cz, CHUNKS.gate.hx * 0.95, CHUNKS.gate.hz * 0.9, 24, 4);
         this.root.add(this.mist);
         const core = CHUNKS.core;
         const pts = chunkOutline(core)
@@ -214,7 +214,31 @@ export class IslandWorld {
     const cz = (minZ + maxZ) / 2;
     const radius = Math.hypot(maxX - minX, maxZ - minZ) / 2;
     const top = this.structure.upstairs ? FLOOR0 + H * 2 + 2.5 : FLOOR0 + H + 2.5;
-    this.rig.setBounds({ cx, cz, radius, top, depth: 7 });
+    // points to frame: land outlines (top + a bit of the rock below), the house's roofline
+    const points = [];
+    for (const id of framed) {
+      const c = CHUNKS[id];
+      const ol = chunkOutline(c);
+      // the misty, not-yet-there gate only needs to peek into frame
+      const k = this.structure.chunks.includes(id) ? 1 : 0.15;
+      for (let i = 0; i < ol.length; i += 3) {
+        const x = c.cx + (ol[i][0] - c.cx) * k;
+        const z = c.cz + (ol[i][1] - c.cz) * k;
+        points.push(new THREE.Vector3(x, 0.1, z));
+        if (k === 1) points.push(new THREE.Vector3(c.cx + (ol[i][0] - c.cx) * 0.5, -c.depth * 0.42, c.cz + (ol[i][1] - c.cz) * 0.5));
+      }
+    }
+    for (const r of this.house.rooms) {
+      const y = r.base + r.height + 1.3;
+      for (const [x, z] of [
+        [r.x0, r.z0],
+        [r.x1, r.z0],
+        [r.x0, r.z1],
+        [r.x1, r.z1],
+      ])
+        points.push(new THREE.Vector3(x, y, z));
+    }
+    this.rig.setBounds({ cx, cz, radius, top, depth: 7, points });
     // the cut-away under the house matches the built ground floor
     const ground = this.structure.built.map((id) => ROOMS[id]).filter((r) => r.floor === 0);
     const x0 = Math.min(...ground.map((r) => r.x0)) - 0.1;

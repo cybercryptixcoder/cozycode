@@ -418,8 +418,17 @@ export class Brain {
 
     // 1. something to show you: the rug, or a lightbulb at our station
     if (this.m.present && !night) {
+      // letters wait at the gate; everything else is shown on the rug
+      if (this.m.present.kind === 'letter') {
+        const mb = crew.station('mailbox');
+        if (mb && crew.reachable(c, mb)) return this.goPresent({ x: mb.pos.x, z: mb.pos.z, gate: true });
+      }
       const spot = crew.rugSpotFor(c);
       if (spot) return this.goPresent(spot);
+      // the rug is full: wait at our station with a lightbulb
+      if (!c.item) this.run([{ type: 'hold', item: () => crew.hooks.presentItem?.(this.m) || crew.makeItem('note'), mode: 'front' }, { type: 'wait', t: rand(6, 12), until: () => !this.m.present || !!crew.rugSpotFor(c) }], 'waiting to show you something');
+      else this.run([{ type: 'act', name: pick(['tapFoot', 'hum', 'lookAround']) }, { type: 'wait', t: rand(4, 9), until: () => !this.m.present || !!crew.rugSpotFor(c) }], 'waiting to show you something');
+      return;
     }
     // 2. bedtime (the night owl keeps working)
     if (night && !(owl && this.m.job)) {
@@ -534,8 +543,10 @@ export class Brain {
     const c = this.c;
     const steps = this.route({ level: 0, x: spot.x, z: spot.z });
     if (!steps) return;
-    spot.reservedBy = c.id;
+    if (!spot.gate) spot.reservedBy = c.id;
+    const item = this.crew.hooks.presentItem?.(this.m);
     const T = [
+      item ? { type: 'hold', item: () => item, mode: 'front' } : null,
       ...steps,
       { type: 'faceCam' },
       { type: 'call', fn: () => this.crew.onReachedRug(c) },
@@ -549,8 +560,7 @@ export class Brain {
         },
       },
     ];
-    for (const t of T) t.cleanup = () => {};
-    this.run(T, 'waiting on the rug to show you something');
+    this.run(T, spot.gate ? 'waiting at the gate with a letter' : 'waiting on the rug to show you something');
   }
 
   /** Build the plan for doing something at a station. */

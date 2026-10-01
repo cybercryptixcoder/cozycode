@@ -258,14 +258,14 @@ export function buildMist(cx, cz, rx, rz, count = 14, seed = 9) {
   const rng = mulberry32(seed);
   const tex = cloudTexture();
   for (let i = 0; i < count; i++) {
-    const m = new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, opacity: 0.75, color: '#fffaf6' });
+    const m = new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, opacity: 0.9, color: '#f2f3ff' });
     const s = new THREE.Sprite(m);
     const a = rng() * TAU;
     const r = Math.sqrt(rng());
-    s.position.set(cx + Math.cos(a) * rx * r, -0.4 + rng() * 1.6, cz + Math.sin(a) * rz * r);
-    const sz = 2.2 + rng() * 2.6;
+    s.position.set(cx + Math.cos(a) * rx * r, -0.2 + rng() * 1.3, cz + Math.sin(a) * rz * r);
+    const sz = 2.4 + rng() * 2.6;
     s.scale.set(sz * 1.4, sz, 1);
-    s.userData = { base: s.position.clone(), ph: rng() * TAU, sp: 0.15 + rng() * 0.2, op: 0.55 + rng() * 0.3 };
+    s.userData = { base: s.position.clone(), ph: rng() * TAU, sp: 0.15 + rng() * 0.2, op: 0.75 + rng() * 0.25 };
     s.userData.noAO = true;
     g.add(s);
   }

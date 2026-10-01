@@ -1,8 +1,9 @@
 // Everything the island remembers. The world is computed from timestamps,
 // so the store holds facts and times, not a running simulation.
 const KEY = 'cozycode.island.v1';
+import { clock } from './clock.js';
 
-export function defaultState(now = Date.now()) {
+export function defaultState(now = clock.now()) {
   return {
     version: 1,
     createdAt: now,

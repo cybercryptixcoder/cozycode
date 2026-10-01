@@ -30,7 +30,7 @@ export const ROOMS = {
   kitchen: { id: 'kitchen', name: 'the kitchen', floor: 0, x0: -6, x1: 0, z0: 0, z1: 6, unlock: 'kitchen', angle: 3, floorStyle: 'tiles', tint: '#ece0cc' },
   bunk: { id: 'bunk', name: 'the bunk room', floor: 1, x0: 0, x1: 6, z0: -6, z1: 0, unlock: 'upstairs', angle: 1, floorStyle: 'planks', tint: '#e2d3c4' },
   yours: { id: 'yours', name: 'your room', floor: 1, x0: -6, x1: 0, z0: -6, z1: 0, unlock: 'upstairs', angle: 2, floorStyle: 'planks', tint: '#eadbd0' },
-  attic: { id: 'attic', name: 'the attic', floor: 'top', x0: 0, x1: 6, z0: -6, z1: 0, unlock: 'workshop', attic: true, floorStyle: 'boards', tint: '#dccab4' },
+  attic: { id: 'attic', name: 'the attic', floor: 'top', x0: 0, x1: 6, z0: -6, z1: 0, unlock: 'upstairs', attic: true, floorStyle: 'boards', tint: '#dccab4' },
 };
 
 /** Doorways between rooms (on the shared wall) and to the outside. */
@@ -80,8 +80,8 @@ export const WINDOWS = {
 export const PORTALS = [
   // the staircase runs up the east side of the commons, landing at the bunk room
   { id: 'stairs', kind: 'stairs', from: { floor: 0, x: 5.35, z: 5.0 }, to: { floor: 1, x: 5.3, z: -0.7 }, unlock: 'upstairs' },
-  // ladder to the attic: in the workshop until there's an upstairs, then in the bunk room
-  { id: 'ladder', kind: 'ladder', from: { floor: 'atticBelow', x: 0.7, z: -5.2 }, to: { floor: 'attic', x: 1.5, z: -4.6 }, unlock: 'workshop' },
+  // ladder from the bunk room up to the attic
+  { id: 'ladder', kind: 'ladder', from: { floor: 1, x: 0.7, z: -5.2 }, to: { floor: 2, x: 1.5, z: -4.6 }, unlock: 'upstairs' },
 ];
 
 /** Land. Each chunk is a soft rounded blob; new chunks rise from the mist. */
@@ -102,11 +102,11 @@ export const GATE = { mailbox: { x: -1.6, z: 9.2 }, wall: { x: -3.6, z: 8.2 }, p
 /** The order the world reveals itself in, and what each unlock touches. */
 export const UNLOCKS = {
   board: { title: 'the idea board', rooms: [], chunks: [] },
-  workshop: { title: 'the workshop', rooms: ['workshop', 'attic'], chunks: [] },
+  workshop: { title: 'the workshop', rooms: ['workshop'], chunks: [] },
   gate: { title: 'the gate', rooms: [], chunks: ['gate'] },
   study: { title: 'the study', rooms: ['study'], chunks: ['west'] },
   kitchen: { title: 'the kitchen', rooms: ['kitchen'], chunks: ['west'] },
-  upstairs: { title: 'upstairs', rooms: ['bunk', 'yours'], chunks: [] },
+  upstairs: { title: 'upstairs', rooms: ['bunk', 'yours', 'attic'], chunks: [] },
   garden: { title: 'the garden', rooms: [], chunks: ['garden'] },
   shed: { title: 'the long-project shed', rooms: [], chunks: ['shed'] },
 };
