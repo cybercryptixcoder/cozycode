@@ -338,12 +338,17 @@ async function main() {
       ft.y = 0.62 + selected.mover.position.y * 0.5;
       orbit.target.lerp(ft, 1 - Math.exp(-3 * dt));
     }
+    // portrait screens: back off and frame the critter above the panel
+    const portrait = camera.aspect < 0.9;
+    const dist = orbit.dist * (portrait ? 1.55 / Math.max(0.5, camera.aspect) * 0.62 : 1);
+    const look = orbit.target.clone();
+    if (portrait) look.y -= 0.9;
     camera.position.set(
-      orbit.target.x + Math.sin(orbit.az) * Math.cos(orbit.el) * orbit.dist,
-      orbit.target.y + Math.sin(orbit.el) * orbit.dist,
-      orbit.target.z + Math.cos(orbit.az) * Math.cos(orbit.el) * orbit.dist
+      look.x + Math.sin(orbit.az) * Math.cos(orbit.el) * dist,
+      look.y + 0.9 * (portrait ? 1 : 0) + Math.sin(orbit.el) * dist,
+      look.z + Math.cos(orbit.az) * Math.cos(orbit.el) * dist
     );
-    camera.lookAt(orbit.target);
+    camera.lookAt(look);
 
     interaction.update(dt);
     for (const c of critters) {

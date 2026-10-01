@@ -178,6 +178,19 @@ export class HUD {
       this.refreshToggles();
     };
     $('.help').onclick = () => this.openPanel('help');
+    // the four dots are a tiny map: click one to turn to that corner
+    const order = ['nw', 'ne', 'se', 'sw'];
+    this.el.dots.forEach((d, i) => {
+      d.title = 'turn to this corner';
+      d.onclick = () => {
+        sound.unlock();
+        const keys = ['nw', 'sw', 'se', 'ne']; // corner index -> far corner
+        const want = keys.indexOf(order[i]);
+        let delta = (want - this.world.rig.corner + 4) % 4;
+        if (delta === 3) delta = -1;
+        if (delta) this.world.rotate(delta);
+      };
+    });
     $('.card .x').onclick = () => this.select(null);
     $('.card-btns').onclick = (e) => {
       const b = e.target.closest('button');

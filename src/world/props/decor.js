@@ -184,6 +184,7 @@ export function addDoor(room, wall, o, opts = {}) {
   leafShape.holes.push(hole);
   const leafGeo = new THREE.ExtrudeGeometry(leafShape, { depth: 0.08, bevelEnabled: true, bevelSize: 0.015, bevelThickness: 0.015, bevelSegments: 2, curveSegments: 24 });
   const hinge = new THREE.Group();
+  hinge.userData.dynamic = true;
   hinge.position.set(-lw / 2, 0.01, -T * 0.55);
   const leaf = mesh(leafGeo, wood);
   hinge.add(leaf);
@@ -226,10 +227,12 @@ export function makeCorkBoard(w = 2.6, h = 1.5) {
   g.add(mesh(rbox(w + 0.16, h + 0.16, 0.08, 0.05), frame, { pos: [0, 0, 0.04] }));
   g.add(mesh(rbox(w, h, 0.03, 0.01), cork, { pos: [0, 0, 0.085] }));
   const notes = new THREE.Group();
+  notes.userData.dynamic = true;
   notes.position.z = 0.1;
   g.add(notes);
   // red yarn connecting a few notes
   const yarn = new THREE.Group();
+  yarn.userData.dynamic = true;
   yarn.position.z = 0.125;
   g.add(yarn);
   g.userData = { notes, yarn, w, h, slots: [] };
@@ -504,6 +507,7 @@ export function wallClock(r = 0.32) {
   minute.add(mesh(rbox(0.025, r * 0.8, 0.012, 0.01), handMat, { pos: [0, r * 0.37, 0] }));
   hour.position.z = 0.095;
   minute.position.z = 0.105;
+  hour.userData.dynamic = minute.userData.dynamic = true;
   g.add(hour, minute);
   g.add(mesh(sphere(0.03, 10, 8), mat('#ff8f7a'), { pos: [0, 0, 0.11] }));
   g.userData.update = (date) => {
@@ -527,17 +531,15 @@ export function fairyLights(length, sag = 0.25, count = 14, colors = ['#ffd27a',
   }
   const curve = new THREE.CatmullRomCurve3(pts);
   g.add(mesh(new THREE.TubeGeometry(curve, 48, 0.008, 5, false), mat('#6b5a4e'), { cast: false }));
-  const bulbs = [];
+  // one material per colour so the string bakes into a handful of meshes
+  const mats = colors.map((col) => uniqueMat(col, { emissive: col, emissiveIntensity: 1, roughness: 0.3 }));
   for (let i = 0; i < count; i++) {
     const t = (i + 0.5) / count;
     const p = curve.getPoint(t);
-    const col = colors[i % colors.length];
-    const m = uniqueMat(col, { emissive: col, emissiveIntensity: 1, roughness: 0.3 });
-    const b = mesh(sphere(0.035, 10, 8), m, { pos: [p.x, p.y - 0.035, p.z + 0.01], scale: [1, 1.25, 1], cast: false });
+    const b = mesh(sphere(0.035, 10, 8), mats[i % mats.length], { pos: [p.x, p.y - 0.035, p.z + 0.01], scale: [1, 1.25, 1], cast: false });
     g.add(b);
-    bulbs.push(b);
   }
-  g.userData.bulbs = bulbs;
+  g.userData.bulbMats = mats;
   return g;
 }
 

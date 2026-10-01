@@ -219,6 +219,7 @@ export class Interaction {
 
   _startDrag(c) {
     this._endPet();
+    this.onDragStart?.(c); // let the brain drop its plans first
     this.drag = { critter: c, prev: c.root.position.clone(), height: 0.85 };
     c.stopWalking();
     c.held = true;
@@ -229,7 +230,6 @@ export class Interaction {
     c.play('held');
     c.drop?.(true);
     this.dom.style.cursor = 'grabbing';
-    this.onDragStart?.(c);
   }
 
   _endDrag() {

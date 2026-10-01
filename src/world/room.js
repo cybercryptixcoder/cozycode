@@ -8,6 +8,7 @@ import { wallTexture, planksTexture, tilesTexture } from '../gfx/textures.js';
 import { mat, texMat, COLORS } from '../gfx/materials.js';
 import { rbox } from '../gfx/geo.js';
 import { NavGrid } from './nav.js';
+import { bakeGroup, prepGeometry } from '../gfx/bake.js';
 
 export const STUB = 0.34; // height of the wall left when cut away
 const T = 0.24; // wall thickness
@@ -352,6 +353,12 @@ export class Room {
   finalize() {
     this.nav.build(this.footprints, this.spec.navOpen || []);
     this._bakeStatics();
+    // merge the parts of interactive props and wall decorations too
+    for (const o of this.interactive) bakeGroup(o);
+    for (const w of Object.values(this.walls)) {
+      for (const it of w.items) bakeGroup(it);
+      for (const f of w.followers) bakeGroup(f);
+    }
   }
 
   /** Merge static, non-interactive props per material to save draw calls. */
@@ -360,22 +367,22 @@ export class Room {
     const inv = new THREE.Matrix4().copy(this.group.matrixWorld).invert();
     const buckets = new Map();
     const removals = [];
-    for (const root of this.statics) {
-      root.traverse((o) => {
-        if (!o.isMesh || o.userData.keep || Array.isArray(o.material)) return;
-        if (o.material.transparent) return;
-        const key = o.material.uuid + (o.castShadow ? 'c' : '') + (o.receiveShadow ? 'r' : '');
-        let b = buckets.get(key);
-        if (!b) buckets.set(key, (b = { material: o.material, cast: o.castShadow, receive: o.receiveShadow, geos: [] }));
-        let g = o.geometry.index ? o.geometry.toNonIndexed() : o.geometry.clone();
-        for (const name of Object.keys(g.attributes)) if (!['position', 'normal', 'uv'].includes(name)) g.deleteAttribute(name);
-        if (!g.attributes.uv) g.setAttribute('uv', new THREE.Float32BufferAttribute(new Float32Array(g.attributes.position.count * 2), 2));
-        if (!g.attributes.normal) g.computeVertexNormals();
-        g.applyMatrix4(new THREE.Matrix4().multiplyMatrices(inv, o.matrixWorld));
-        b.geos.push(g);
-        removals.push(o);
-      });
-    }
+    const visit = (obj) => {
+      for (const o of obj.children) {
+        if (o.userData.dynamic) {
+          bakeGroup(o); // animated part: stays where it is, merged internally
+          continue;
+        }
+        if (o.isMesh && !o.userData.keep && !Array.isArray(o.material) && !o.material.transparent && o.children.length === 0) {
+          const key = o.material.uuid + (o.castShadow ? 'c' : '') + (o.receiveShadow ? 'r' : '');
+          let b = buckets.get(key);
+          if (!b) buckets.set(key, (b = { material: o.material, cast: o.castShadow, receive: o.receiveShadow, geos: [] }));
+          b.geos.push(prepGeometry(o.geometry, new THREE.Matrix4().multiplyMatrices(inv, o.matrixWorld)));
+          removals.push(o);
+        } else visit(o);
+      }
+    };
+    for (const root of this.statics) visit(root);
     for (const o of removals) o.parent?.remove(o);
     const baked = new THREE.Group();
     baked.name = 'baked';

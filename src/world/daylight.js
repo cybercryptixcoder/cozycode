@@ -334,11 +334,11 @@ export function applyLamps(room, level, time) {
   }
   for (const gl of room.glows) {
     const k = gl.userData.level !== undefined ? gl.userData.level : level;
-    const bulbs = gl.userData.bulbs;
-    if (!bulbs) continue;
-    bulbs.forEach((b, i) => {
-      const tw = 0.75 + 0.25 * Math.sin(time * 2.2 + i * 1.7);
-      b.material.emissiveIntensity = 0.25 + k * 7 * tw;
+    const mats = gl.userData.bulbMats;
+    if (!mats) continue;
+    mats.forEach((m, i) => {
+      const tw = 0.72 + 0.28 * Math.sin(time * 2.2 + i * 1.7);
+      m.emissiveIntensity = 0.25 + k * 7 * tw;
     });
   }
 }

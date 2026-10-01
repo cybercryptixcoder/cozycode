@@ -36,6 +36,7 @@ export function mailbox() {
   g.add(mesh(sphere(0.025, 8, 6), mat('#f07462'), { pos: [0.016, 0.61, 0.43], scale: [1, 1, 0.4] }));
   // flag
   const flag = new THREE.Group();
+  flag.userData.dynamic = true;
   flag.position.set(0.43, 0.75, 0);
   flag.add(mesh(rbox(0.03, 0.4, 0.03, 0.01), mat('#ffd6a0'), { pos: [0, 0.2, 0] }));
   flag.add(mesh(rbox(0.03, 0.14, 0.2, 0.02), mat('#ffd36b'), { pos: [0, 0.33, 0.1] }));
@@ -131,6 +132,7 @@ export function letterWall(w = 2.6, h = 1.4) {
     g.add(mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 20, 0.006, 4), mat('#c4a484'), { cast: false }));
   }
   const pinned = new THREE.Group();
+  pinned.userData.dynamic = true;
   g.add(pinned);
   g.userData = { pinned, w, h };
   return g;
@@ -180,6 +182,7 @@ export function tube(points, color = '#cbd5e1') {
   g.add(mesh(new THREE.TubeGeometry(curve, 64, 0.07, 12, false), mat(color, { roughness: 0.25, metalness: 0.35 })));
   const pod = mesh(capsule(0.05, 0.1, 6, 10), mat('#ffd36b', { roughness: 0.4, metalness: 0.2 }), {});
   pod.visible = false;
+  pod.userData.keep = true;
   g.add(pod);
   g.userData = { curve, pod };
   return g;

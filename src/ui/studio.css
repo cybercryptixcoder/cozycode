@@ -188,7 +188,7 @@
     left: 8px;
     right: 8px;
     width: auto;
-    height: 34vh;
+    height: 30vh;
   }
   .panel.right {
     display: none;
@@ -196,6 +196,9 @@
   .hint {
     font-size: 11px;
     padding: 7px 12px;
+  }
+  .hint .wide {
+    display: none;
   }
   .studio-head {
     top: 8px;

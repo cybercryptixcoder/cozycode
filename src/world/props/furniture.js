@@ -163,6 +163,7 @@ export function plant(kind = 'leafy', { scale = 1, color = '#e88c66', seed = 1 }
   const potR = kind === 'succulent' ? 0.16 : 0.22;
   g.add(pot(potR, potH, color));
   const foliage = new THREE.Group();
+  foliage.userData.dynamic = true;
   foliage.position.y = potH - 0.02;
   g.add(foliage);
   if (kind === 'leafy') {
@@ -569,6 +570,7 @@ export function gramophone() {
   const box = mesh(rbox(0.56, 0.16, 0.48, 0.04), mat('#e3a46f'), { pos: [0, 0.58, 0] });
   g.add(box);
   const record = group({ pos: [-0.04, 0.67, 0.02] });
+  record.userData.dynamic = true;
   record.add(mesh(cyl(0.2, 0.2, 0.012, 32), mat('#2b2523', { roughness: 0.25 })));
   record.add(mesh(cyl(0.07, 0.07, 0.014, 20), mat('#ff8f7a', { roughness: 0.5 })));
   g.add(record);
@@ -596,6 +598,7 @@ export function gramophone() {
   }
   hornGeo.computeVertexNormals();
   const horn = mesh(hornGeo, mat('#ff9fb2', { roughness: 0.45, side: THREE.DoubleSide }), { pos: [0.06, 1.06, 0.04], rot: [1.1, 0, 0.15] });
+  horn.userData.keep = true;
   g.add(horn);
   g.add(mesh(torus(0.37, 0.02, 6, 30), brass, { pos: [0.06 + 0.07, 1.06 + 0.22, 0.04 + 0.45], rot: [1.1 - Math.PI / 2, 0, 0.15] }));
   g.userData.record = record;

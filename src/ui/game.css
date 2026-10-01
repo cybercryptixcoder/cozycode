@@ -27,7 +27,6 @@
   background: rgba(255, 249, 241, 0.92);
   border-radius: 20px;
   box-shadow: var(--shadow);
-  pointer-events: none;
 }
 .plaque-room {
   font-size: 22px;
@@ -49,14 +48,19 @@
 .plaque .dots {
   display: inline-grid;
   grid-template-columns: 7px 7px;
-  gap: 2px;
+  gap: 3px;
 }
 .plaque .dots i {
   width: 7px;
   height: 7px;
   border-radius: 2px;
   background: #ead8c8;
-  transition: background 0.3s;
+  transition: background 0.3s, transform 0.2s;
+  cursor: pointer;
+}
+.plaque .dots i:hover {
+  transform: scale(1.35);
+  background: #ffc7b5;
 }
 .plaque .dots i:nth-child(3) {
   order: 4;
@@ -875,6 +879,18 @@
     top: auto;
     bottom: 146px;
     width: auto;
+    padding: 10px 12px;
+  }
+  .card .needs,
+  .card-bio {
+    display: none;
+  }
+  .card-top canvas {
+    width: 44px;
+    height: 44px;
+  }
+  .card-rows {
+    margin: 6px 0;
   }
   .bottom {
     bottom: 12px;

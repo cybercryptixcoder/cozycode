@@ -15,7 +15,7 @@ import { Society } from './society.js';
 import { HUD } from '../ui/hud.js';
 import { Store } from './store.js';
 import { createAPI } from './api.js';
-import { clamp } from '../core/util.js';
+import { clamp, pick } from '../core/util.js';
 
 export class World {
   constructor(container) {
@@ -69,10 +69,30 @@ export class World {
       sound,
     });
     this.rig.interaction = this.interaction;
+    // double-click a sproutling to follow it around
+    engine.renderer.domElement.addEventListener('dblclick', (e) => {
+      this.interaction._ndcFrom(e);
+      const { critter } = this.interaction.pick();
+      if (critter) {
+        this.hud.select(critter);
+        this.rig.follow(critter);
+        this.hud._syncCardButtons();
+      }
+    });
     this.interaction.onDragStart = (c) => this.society.onPicked(c);
 
     this.society = new Society(this);
     this.society.load(this.store.data.critters);
+    const awaySec = (Date.now() - (this.store.data.lastSeen || Date.now())) / 1000;
+    if (this.store.data.critters && awaySec > 90) this.society.catchUp(awaySec);
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) this._hiddenAt = Date.now();
+      else if (this._hiddenAt) {
+        const s = (Date.now() - this._hiddenAt) / 1000;
+        this._hiddenAt = null;
+        if (s > 90) this.society.catchUp(s);
+      }
+    });
 
     this.hud = new HUD(this);
     this.api = createAPI(this);
@@ -229,6 +249,23 @@ export class World {
 
   start() {
     this.engine.start();
+    // a little hello when you arrive
+    setTimeout(() => {
+      const cam = this.engine.camera.position;
+      const here = this.society
+        .inRoom(this.roomId)
+        .filter((c) => !c.held && c.mainAction?.name !== 'sleep' && !c.brain.station)
+        .sort((a, b) => a.position.distanceTo(cam) - b.position.distanceTo(cam))
+        .slice(0, 3);
+      here.forEach((c, i) =>
+        setTimeout(() => {
+          c.brain.attending = 2.5;
+          c.faceToward(cam);
+          c.play(i === 0 ? 'wave' : Math.random() < 0.5 ? 'hop' : 'wave', { sound: i === 0 });
+          if (i === 0) c.say(pick(['oh! hi!!', 'you’re here!', 'hiii :)', 'welcome back!']));
+        }, 400 + i * 450)
+      );
+    }, 1600);
   }
 }
 

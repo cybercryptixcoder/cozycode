@@ -57,7 +57,8 @@ export class CameraRig {
     const vfov = (cam.fov * Math.PI) / 180;
     const hfov = 2 * Math.atan(Math.tan(vfov / 2) * cam.aspect);
     // horizontal extent seen from a corner is roughly the room diagonal
-    const diag = Math.hypot(w, d) + 1.2;
+    // on tall phone screens let the sides crop a little; pinch to see more
+    const diag = (Math.hypot(w, d) + 1.2) * (cam.aspect < 1 ? 0.74 : 1);
     const distH = diag / 2 / Math.tan(hfov / 2);
     const vertExtent = Math.sin(this.elevation) * Math.hypot(w, d) * 0.62 + h * Math.cos(this.elevation) + 1.4;
     const distV = vertExtent / 2 / Math.tan(vfov / 2);

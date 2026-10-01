@@ -223,6 +223,33 @@ export class Society {
     void id;
   }
 
+  /** Time passed while nobody was watching: needs drift, everyone moved on. */
+  catchUp(seconds) {
+    const night = this.world.daylight.isNight;
+    for (const c of this.critters) {
+      const b = c.brain;
+      for (const k in b.needs) {
+        const drift = b.decay[k] * Math.min(seconds, 4 * 3600) * 0.25;
+        b.needs[k] = Math.max(0.15, Math.min(1, b.needs[k] - drift + (Math.random() - 0.3) * 0.4));
+      }
+      if (seconds > 600 && !c.held) {
+        b.cancel();
+        c.seat = 0;
+        c.stopSlot('main', 0);
+        // wander off to wherever they ended up
+        if (Math.random() < 0.25) {
+          const other = Object.keys(this.world.rooms).find((r) => r !== c.roomId);
+          c.roomId = other;
+          this.world.rooms[other].group.add(c.root);
+        }
+        const p = this.world.rooms[c.roomId].randomFreePoint();
+        c.position.set(p.x, 0, p.z);
+        if (night) b.needs.energy = Math.min(b.needs.energy, 0.2);
+      }
+    }
+    this.world.hud?.renderRoster();
+  }
+
   // ------------------------------------------------------------ user poking
   onPicked(c) {
     c.brain.interrupt();

@@ -493,7 +493,9 @@ export class Critter {
     this.ctx.sfx?.('boop', { pitch: this.voice, critter: this });
     if (this.held) return;
     if (this.mainAction?.name === 'sleep') {
-      this.play('wake');
+      // with a brain, ending the nap lets its plan continue into 'wake'
+      if (this.brain) this.stop('sleep', 0.2);
+      else this.play('wake');
       return;
     }
     if (this.pokeCount >= 7) {
@@ -745,17 +747,17 @@ export class Critter {
         const impact = Math.abs(this.vy);
         this.airY = 0;
         this.falling = false;
-        if (impact > 1.2) {
+        if (impact > 1.2 || this._bigFall) {
           this.sq.impulse(-Math.min(4, impact * 0.55));
           this.ctx.fx?.('dust', this.footPos(), { count: 5, size: 0.3 });
           this.ctx.sfx?.('land', { critter: this, strength: impact });
-          if (impact > 3) {
+          if (impact > 3 && !this._bigFall) {
             this.vy = impact * 0.22; // one little bounce
             this.airY = 0.0001;
             this.falling = true;
             this._bigFall = true;
           } else {
-            this.play(this._bigFall ? 'dizzy' : 'land');
+            this.play(this._bigFall && chance(0.35) ? 'dizzy' : 'land');
             this._bigFall = false;
           }
         }

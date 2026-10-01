@@ -54,6 +54,12 @@ export class Brain {
   run(tasks, label) {
     this.cancel();
     this.tasks = tasks.filter(Boolean);
+    const c = this.c;
+    if (c.seat > 0.01 && this.tasks[0]?.type !== 'hop') {
+      // still perched on something: hop down before doing anything else
+      const p = this.room.nav.nearestFree(c.position.x + Math.sin(c.heading) * 0.6, c.position.z + Math.cos(c.heading) * 0.6);
+      this.tasks.unshift({ type: 'hop', to: p, seat: 0 });
+    }
     if (label) this.doing = label;
   }
 
@@ -191,6 +197,12 @@ export class Brain {
       case 'act':
         if (t.loop) {
           t.every?.(c, t.elapsed, dt, this);
+          if (t.elapsed > 0.6 && !c.isPlaying(t.name)) {
+            // someone else (a poke, the player) ended it early
+            this.loopAction = null;
+            t.done = true;
+            break;
+          }
           if (t.elapsed >= t.t || t.until?.(c, this)) {
             c.stop(t.name, 0.3);
             this.loopAction = null;
