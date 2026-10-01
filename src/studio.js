@@ -70,6 +70,7 @@ async function main() {
     sfx: (name, opts) => sound.play(name, opts),
     camera,
     beat: () => sound.beat(),
+    musicOn: () => sound.musicOn && !!sound.ctx,
     makeItem: (kind) => makeItem(kind),
     onSay: (c, text) => {
       sound.babble(text, c.voice);
@@ -231,6 +232,40 @@ async function main() {
       wrap.appendChild(btn);
     }
     sec.appendChild(wrap);
+    panel.appendChild(sec);
+  }
+
+  {
+    // every eye shape and mouth, to look at the face set on its own
+    const sec = document.createElement('section');
+    sec.innerHTML = '<h3>Eyes</h3>';
+    const eyes = document.createElement('div');
+    eyes.className = 'btns';
+    for (const e of ['normal', 'happy', 'closed', 'squint', 'wide', 'dot', 'star', 'heart', 'dizzy', 'sleepy', 'sad', 'angry', 'focus', 'wink']) {
+      const b = document.createElement('button');
+      b.textContent = e;
+      b.onclick = () => {
+        sound.unlock();
+        selected.showFace({ eyes: e }, 3.5);
+      };
+      eyes.appendChild(b);
+    }
+    sec.appendChild(eyes);
+    const h = document.createElement('h3');
+    h.textContent = 'Mouths';
+    sec.appendChild(h);
+    const mouths = document.createElement('div');
+    mouths.className = 'btns';
+    for (const m of ['smile', 'cat', 'o', 'open', 'grin', 'yawn', 'flat', 'wobble', 'frown', 'tongue', 'pout']) {
+      const b = document.createElement('button');
+      b.textContent = m;
+      b.onclick = () => {
+        sound.unlock();
+        selected.showFace({ mouth: m }, 3.5);
+      };
+      mouths.appendChild(b);
+    }
+    sec.appendChild(mouths);
     panel.appendChild(sec);
   }
 

@@ -112,6 +112,16 @@ export class World {
       this.hud.refreshToggles();
       if (sound.musicOn) this.society.musicStarted();
     });
+    bus.on('music:party', () => {
+      sound.unlock();
+      if (!sound.musicOn) {
+        sound.setMusic(true);
+        this.store.data.settings.music = true;
+        this.hud.refreshToggles();
+      }
+      sound.play('chime');
+      this.society.musicStarted();
+    });
     bus.on('lamp:toggle', () => this.society.onLampToggled());
 
     // keyboard
@@ -239,6 +249,7 @@ export class World {
   }
 
   save() {
+    if (this._noSave) return;
     this.store.data.critters = this.society.serialize();
     this.store.data.settings.corner = this.rig.corner;
     this.store.data.settings.time = this.daylight.presetId;

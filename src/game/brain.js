@@ -319,11 +319,11 @@ export class Brain {
       }
       if (s.activity === 'sleep') score += night ? 2.5 : n.energy < 0.3 ? 1.2 : -0.6;
       if (night && s.tags.includes('work')) score -= 0.6;
-      if (s.activity === 'dance') score += 0.8 + c.traits.energy;
+      if (s.activity === 'dance') score += performance.now() < this.society.partyUntil ? 1.6 + c.traits.energy : -0.4 + c.traits.energy * 0.5;
       if (s.activity === 'pin' && this.society.pendingNotes.length) score += 3;
       if (s.activity === 'write' && s.id === 'todo' && this.society.pendingTodos.length) score += 3;
       if (s.activity === 'post' && this.society.pendingLetters.length) score += 3;
-      if (s.activity === 'tea') score += this.society.teaParty(room) * 0.35 - 0.3;
+      if (s.activity === 'tea') score += this.society.teaParty(room) * 0.3 - 0.45;
       const d = Math.hypot(s.pos.x - c.position.x, s.pos.z - c.position.z);
       score -= d * 0.04;
       if (this.history.includes(s.id)) score -= 0.7; // variety

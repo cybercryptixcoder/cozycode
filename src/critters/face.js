@@ -192,8 +192,9 @@ export class FaceRenderer {
         let lidIn = null;
         let lidOut = null;
         if (mode === 'sleepy') {
-          lidIn = 0.02;
-          lidOut = 0.18;
+          // heavy, rounded lids sitting low and level
+          lidIn = lidOut = 0.12;
+          ry *= 0.85;
         } else if (mode === 'sad') {
           lidIn = -0.62;
           lidOut = 0.12;
@@ -214,7 +215,7 @@ export class FaceRenderer {
           const xo = e.x + e.side * rx * 1.3;
           const yi = e.y + lidIn * ry;
           const yo = e.y + lidOut * ry;
-          const bulge = mode === 'angry' ? -0.05 : 0.16;
+          const bulge = mode === 'angry' ? -0.05 : mode === 'sleepy' ? 0.42 : 0.16;
           const mx = (xi + xo) / 2;
           const my = (yi + yo) / 2 + bulge * ry;
           ctx.beginPath();

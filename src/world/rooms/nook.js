@@ -140,7 +140,7 @@ export function buildNook(world) {
   }
 
   const gramophone = F.gramophone();
-  room.place(gramophone, { x: 0.55, z: -3.95, rot: 0, footprint: { w: 0.95, d: 0.65 }, interactive: { label: 'Gramophone', hint: 'click for music', onClick: () => bus.emit('music:toggle') } });
+  room.place(gramophone, { x: 0.55, z: -3.95, rot: 0, footprint: { w: 0.95, d: 0.65 }, interactive: { label: 'Gramophone', hint: 'click for a dance party', onClick: () => bus.emit('music:party') } });
   room.gramophone = gramophone;
   room.station({ id: 'dance-a', label: 'dancing to the music', corner: 'center', activity: 'dance', pos: { x: 0.0, z: -2.6 }, face: 0, tags: ['fun', 'music'] });
   room.station({ id: 'dance-b', label: 'dancing to the music', corner: 'center', activity: 'dance', pos: { x: 1.0, z: -2.75 }, face: 0, tags: ['fun', 'music'] });

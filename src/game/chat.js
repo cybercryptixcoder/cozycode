@@ -117,6 +117,7 @@ function respond(world, raw, selected) {
     sound.unlock();
     if (!sound.musicOn) bus.emit('music:toggle');
     else soc.musicStarted();
+    soc.partyUntil = performance.now() + 120000;
     for (const c of awake) if (!c.brain.station) setTimeout(() => c.play('dance', {}), rand(0, 600)) && setTimeout(() => c.stop('dance'), rand(9000, 14000));
     reply(who, line('dance'), 300);
     return;

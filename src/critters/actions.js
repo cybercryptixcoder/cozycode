@@ -495,6 +495,22 @@ export const ACTIONS = {
         c.sproutX.impulse(-3);
         if (chance(0.5)) sfx(c, 'mumble');
       }
+      // sleep bubble: grows with each breath... and eventually pops
+      const bd = a.data;
+      bd.bub = (bd.bub ?? -rand(1, 3)) + 1 / 60;
+      if (bd.bub > 0 && !a.stopping) {
+        const grow = Math.min(1, bd.bub / 4);
+        c.noseBubble(grow * (0.65 + 0.35 * (breath * 0.5 + 0.5)));
+        if (bd.bub > 4.5 && Math.random() < 0.004) {
+          c.noseBubble(0);
+          bd.bub = -rand(2, 5);
+          c.sq.impulse(-0.8);
+          sfx(c, 'pop');
+        }
+      } else c.noseBubble(0);
+    },
+    end(c) {
+      c.noseBubble(0);
     },
   },
 

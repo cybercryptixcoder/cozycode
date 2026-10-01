@@ -207,9 +207,9 @@ export class Sound {
         break;
       case 'step': {
         const now = performance.now();
-        if (!o.stomp && now - this._lastStep < 90) return;
+        if (!o.stomp && now - this._lastStep < 140) return;
         this._lastStep = now;
-        N({ dur: o.stomp ? 0.08 : 0.025, gain: o.stomp ? 0.08 : o.soft ? 0.012 : 0.018, filter: { type: 'bandpass', f: o.stomp ? 600 : rand(2200, 3200), q: 1.5 }, reverb: 0 });
+        N({ dur: o.stomp ? 0.08 : 0.025, gain: o.stomp ? 0.08 : o.soft ? 0.009 : 0.013, filter: { type: 'bandpass', f: o.stomp ? 600 : rand(2200, 3200), q: 1.5 }, reverb: 0 });
         break;
       }
       case 'giggle':

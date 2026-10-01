@@ -72,6 +72,13 @@ export const DEFAULT_CREW = [
   },
 ];
 
+/** End the open-ended 'wait while socialising' step, wherever it is in the plan. */
+function releaseSocialWait(c) {
+  const b = c.brain;
+  if (b.task?.type === 'wait' && b.task.t === 999) b.task.done = true;
+  b.tasks = b.tasks.filter((t) => !(t.type === 'wait' && t.t === 999));
+}
+
 const NAMES = ['Sprig', 'Dumpling', 'Waffle', 'Clover', 'Miso', 'Peaches', 'Juniper', 'Noodle', 'Fig', 'Momo', 'Bean', 'Puddle', 'Toast', 'Bun', 'Kiwi', 'Maple'];
 
 export class Society {
@@ -83,12 +90,14 @@ export class Society {
     this.pendingLetters = [];
     this.chats = [];
     this.games = [];
+    this.partyUntil = 0;
     this._greetT = 0;
     this.ctx = {
       fx: (type, pos, opts) => this._fx(type, pos, opts),
       sfx: (name, opts) => sound.play(name, opts),
       camera: world.engine.camera,
       beat: () => sound.beat(),
+      musicOn: () => sound.musicOn && !!sound.ctx,
       makeItem: (kind) => makeItem(kind),
       onSay: (c, text, opts) => bus.emit('critter:say', c, text, opts),
     };
@@ -377,7 +386,7 @@ export class Society {
     for (const c of [ch.a, ch.b]) {
       c.brain.chatting = null;
       c.stop('talk');
-      if (c.brain.task?.type === 'wait' && c.brain.task.t === 999) c.brain.task.done = true;
+      releaseSocialWait(c);
     }
     if (ending) {
       ch.a.play(ending, { partner: ch.b });
@@ -448,7 +457,7 @@ export class Society {
         for (const c of [g.a, g.b]) {
           c.brain.chatting = null;
           c.stopWalking();
-          if (c.brain.task?.t === 999) c.brain.task.done = true;
+          releaseSocialWait(c);
           c.brain.needs.fun = clamp(c.brain.needs.fun + 0.5);
         }
         g.a.play('giggle');
@@ -716,6 +725,7 @@ export class Society {
 
   // events from the world -----------------------------------------------------
   musicStarted() {
+    this.partyUntil = performance.now() + 90000;
     // a few music lovers come dance
     const room = this.world.room;
     const dancers = this.inRoom(room.id)

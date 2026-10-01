@@ -20,6 +20,7 @@ import {
   chance,
   mulberry32,
   smoothstep,
+  pickWeighted,
 } from '../core/util.js';
 
 const _v = new THREE.Vector3();
@@ -54,6 +55,8 @@ const MOOD_FACES = {
 };
 
 let nextId = 1;
+let bubbleMat = null;
+let bubbleGeo = null;
 
 export class Critter {
   constructor(opts = {}) {
@@ -458,6 +461,11 @@ export class Critter {
     this.ctx.onSay?.(this, text, { ...opts, duration: dur });
   }
 
+  /** Hold a specific face for a while (eyes/mouth names from face.js). */
+  showFace(face, seconds = 3) {
+    this.faceOverride = { ...face, until: this.time + seconds };
+  }
+
   setMood(mood, hold = 0) {
     this.mood = mood;
     this.moodHold = hold;
@@ -542,7 +550,7 @@ export class Critter {
 
     this._locomotion(dt, p);
     this._lookAndBlink(dt, f);
-    this._idle(dt, p);
+    this._idle(dt, p, f);
 
     // actions ---------------------------------------------------------------
     for (let i = 0; i < this.actions.length; i++) {
@@ -589,6 +597,18 @@ export class Critter {
         p.armL.z += 0.5;
         p.armL.f += 0.4;
       }
+    }
+
+    // explicit face override (studio / API): { eyes, mouth, blush, until }
+    const fo = this.faceOverride;
+    if (fo && this.time < fo.until) {
+      if (fo.eyes) f.eyes = fo.eyes;
+      if (fo.mouth) {
+        f.mouth = fo.mouth;
+        f.mouthOpen = fo.mouthOpen ?? 0.6;
+      }
+      if (fo.blush !== undefined) f.blush = fo.blush;
+      if (fo.brows !== undefined) f.brows = fo.brows;
     }
 
     // talking mouth
@@ -839,13 +859,47 @@ export class Critter {
     f.lookY = this.look.y;
   }
 
-  _idle(dt, p) {
+  _idle(dt, p, f) {
     const t = this.time;
+    const act = this.mainAction?.name;
     // breathing + soft organic sway
-    const breath = this.mainAction?.name === 'sleep' ? 0 : 1;
+    const breath = act === 'sleep' ? 0 : 1;
     p.sq += Math.sin(t * 2.3 + this.seed) * 0.014 * breath;
     p.tz += noise1(t * 0.35, this.seed) * 0.025;
     p.tx += noise1(t * 0.28, this.seed + 7) * 0.015;
+
+    // bob along when there's music (everyone has their own groove)
+    if (this.ctx.musicOn?.() && !this.held && act !== 'sleep' && act !== 'dance') {
+      const b = this.ctx.beat() * Math.PI;
+      const k = 0.5 + this.traits.energy * 0.8;
+      p.tx += Math.abs(Math.sin(b)) * 0.035 * k;
+      p.y += Math.abs(Math.sin(b)) * 0.008 * k;
+      p.sproutZ += Math.sin(b * 0.5) * 0.15 * k;
+    }
+    // a bit shy when you hover over them
+    f.blush += this.hover * 0.35;
+    // sleepy ones droop
+    if (this.mood === 'sleepy') {
+      p.droop += 0.45;
+      p.sq -= 0.02;
+    }
+    // little face quirks: a cat smile, a humming 'o', a tongue blep
+    this.quirkT = (this.quirkT ?? rand(4, 10)) - dt;
+    if (this.quirkT <= 0) {
+      this.quirkT = rand(6, 16);
+      const mouth = pickWeighted([
+        ['cat', 3],
+        ['tongue', 1.2 + this.traits.energy],
+        ['o', 1],
+        ['smile', 1],
+      ]);
+      this.quirk = { mouth, until: t + rand(1.2, 2.6) };
+    }
+    const cheerful = this.mood === 'happy' || this.mood === 'content' || this.mood === 'curious';
+    if (this.quirk && t < this.quirk.until && !act && this.talkTime <= 0 && cheerful) {
+      f.mouth = this.quirk.mouth;
+      if (this.quirk.mouth === 'o') f.mouthOpen = 0.12;
+    }
 
     // random fidgets when idle & free
     if (!this.fidgetsEnabled) return;
@@ -886,6 +940,26 @@ export class Critter {
       }
     }
     return null;
+  }
+
+  /** The classic sleep bubble. scale 0 hides it. */
+  noseBubble(scale) {
+    if (!this._bubble) {
+      if (!bubbleMat) {
+        bubbleMat = new THREE.MeshStandardMaterial({ color: '#d6f1ff', transparent: true, opacity: 0.5, roughness: 0.05, envMapIntensity: 1.4, depthWrite: false });
+        bubbleGeo = new THREE.SphereGeometry(1, 20, 14);
+      }
+      const b = new THREE.Mesh(bubbleGeo, bubbleMat);
+      b.userData.noAO = true;
+      b.renderOrder = 3;
+      this.bodyPivot.add(b);
+      this._bubble = b;
+    }
+    const b = this._bubble;
+    const r = 0.085 * scale;
+    b.visible = scale > 0.02;
+    b.scale.setScalar(Math.max(0.001, r));
+    b.position.set(0.1, 0.5, bodyRadiusAt(0.5) - 0.03 + r * 0.85);
   }
 
   footPos(out = new THREE.Vector3()) {
