@@ -209,6 +209,7 @@ export class Daylight {
     s.normalBias = 0.025;
     scene.add(this.sun);
     scene.add(this.sun.target);
+    engine.shadowLights = [this.sun];
 
     this.moon = new THREE.DirectionalLight('#a9bcff', 0.4);
     this.moon.position.set(-6, 9, -4);

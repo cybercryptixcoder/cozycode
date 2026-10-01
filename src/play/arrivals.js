@@ -181,7 +181,7 @@ export class Balloon {
 
   anchor() {
     const s = this.world.structure;
-    if (s?.chunks.includes('gate')) return new THREE.Vector3(GATE.mooring.x + (this.big ? 0.2 : 1.3), 0, GATE.mooring.z + (this.big ? -0.1 : 0.6));
+    if (s?.chunks.includes('gate')) return this.big ? new THREE.Vector3(GATE.mooring.x + 0.2, 0, GATE.mooring.z - 0.1) : new THREE.Vector3(-2.0, 0, 11.75);
     return new THREE.Vector3(5.6, 0, 8.2);
   }
 

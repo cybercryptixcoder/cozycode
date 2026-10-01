@@ -241,7 +241,9 @@ export class Engine {
       const sm = this.renderer.shadowMap;
       sm.enabled = this.quality !== 'low';
       sm.autoUpdate = false;
-      if (this.frame % 2 === 0 || this._shadowDirty) {
+      // a light that just started casting needs its map right away
+      const fresh = (this.shadowLights || []).some((l) => l.castShadow && !l.shadow.map);
+      if (this.frame % 2 === 0 || this._shadowDirty || fresh || !sm.enabled) {
         sm.needsUpdate = true;
         this._shadowDirty = false;
       }
