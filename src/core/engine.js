@@ -173,6 +173,8 @@ export class Engine {
       this._buildComposer();
     }
     this._w = this._h = null; // force a resize of the new targets
+    this._shadowDirty = true;
+    this.scene.traverse((o) => o.material && (Array.isArray(o.material) ? o.material.forEach((m) => (m.needsUpdate = true)) : (o.material.needsUpdate = true)));
     this.resize();
     this.onQuality?.(q);
   }
@@ -235,6 +237,14 @@ export class Engine {
 
   render() {
     if (this.direct) {
+      // the sun moves slowly: refresh shadows every other frame (never on 'low')
+      const sm = this.renderer.shadowMap;
+      sm.enabled = this.quality !== 'low';
+      sm.autoUpdate = false;
+      if (this.frame % 2 === 0 || this._shadowDirty) {
+        sm.needsUpdate = true;
+        this._shadowDirty = false;
+      }
       this.renderer.render(this.scene, this.camera);
       return;
     }

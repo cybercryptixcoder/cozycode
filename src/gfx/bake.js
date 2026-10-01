@@ -40,6 +40,7 @@ export function bakeGroup(root) {
   const removals = [];
   const visit = (obj) => {
     for (const child of obj.children) {
+      if (child.userData.noBake) continue;
       if (child.userData.dynamic) {
         bakeGroup(child);
         continue;

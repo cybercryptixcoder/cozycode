@@ -10,6 +10,7 @@ import { mat, uniqueMat, texMat } from '../gfx/materials.js';
 import { rbox, cyl, sphere, mesh, group, plane } from '../gfx/geo.js';
 import { Spring, clamp, easeOutBack, smoothstep, mulberry32, TAU } from '../core/util.js';
 import { cloudTexture } from './terrain.js';
+import { bakeGroup } from '../gfx/bake.js';
 
 export const FLOOR0 = 0.15;
 const STUB = 0.32;
@@ -386,6 +387,7 @@ function gableRoof(rect, baseY, rise, overhang = 0.4) {
     const snow = new THREE.Mesh(new THREE.BoxGeometry(w * 0.98, 0.09, slopeLen * 0.96), snowMat);
     snow.position.y = 0.11;
     snow.userData.snow = true;
+    snow.userData.noBake = true;
     m.add(snow);
     g.add(m);
   };
@@ -571,6 +573,10 @@ export class House {
     }
     // porch
     if (this.byId.commons) this.levelGroups[0].add(this._porch());
+    // merge the many little static pieces (keeps draw calls low on phones)
+    for (const w of this.walls) for (const it of w.items) bakeGroup(it);
+    for (const r of this.roofs) bakeGroup(r);
+    for (const lg of this.levelGroups) for (const c of lg.children) if (c.name === 'stairs' || c.name === 'porch' || c.userData.ladder) bakeGroup(c);
     this._reattachFollowers();
     this.upstairs = upstairs;
   }
@@ -660,6 +666,7 @@ export class House {
         b.add(mesh(rbox(s * 1.01, 0.05, 0.1, 0.01), mat('#c08a5a'), { pos: [0, s * 0.4, 0] }));
       }
       g.add(boxes);
+      boxes.userData.noBake = true;
       this.stairBoxes = boxes;
     }
     return g;
@@ -667,6 +674,7 @@ export class House {
 
   _ladder(baseY, topY) {
     const g = new THREE.Group();
+    g.userData.ladder = true;
     const wood = mat('#cfa77d', { roughness: 0.75 });
     const h = topY - baseY;
     for (const s of [-1, 1]) g.add(mesh(rbox(0.06, h + 0.4, 0.06, 0.02), wood, { pos: [0.7 + s * 0.22, baseY + h / 2 + 0.2, -5.45], rot: [-0.12, 0, 0] }));

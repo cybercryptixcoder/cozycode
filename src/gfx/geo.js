@@ -67,7 +67,7 @@ export function circle(r, seg = 40) {
 /** Puffy cushion: a rounded box with its top/bottom inflated. */
 export function cushion(w, h, d, puff = 0.5) {
   return cached(`cushion:${w}:${h}:${d}:${puff}`, () => {
-    const g = new RoundedBoxGeometry(w, h, d, 5, Math.min(w, h, d) * 0.45);
+    const g = new RoundedBoxGeometry(w, h, d, 3, Math.min(w, h, d) * 0.45);
     const p = g.attributes.position;
     for (let i = 0; i < p.count; i++) {
       const x = p.getX(i) / (w / 2);

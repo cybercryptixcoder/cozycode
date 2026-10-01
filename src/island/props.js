@@ -103,6 +103,7 @@ export function ideaBoard(w = 1.9, h = 1.25) {
   }
   cg.computeVertexNormals();
   cloth.add(mesh(cg, clothMat, { pos: [0, -0.06, 0.12] }));
+  cloth.userData.noBake = true;
   g.add(cloth);
   g.userData = { notes, slots, cloth, w, h };
   return g;
@@ -263,6 +264,7 @@ export function buildBench(w = 2.5, d = 0.85, h = 0.6) {
     cover.add(mesh(cushion(w / 3 - 0.08, 0.14, d - 0.1, 0.9), mat('#e2d8ca', { roughness: 1 }), { pos: [0, 0.05, 0] }));
     cover.add(mesh(rbox(0.2, 0.18, 0.2, 0.03), mat('#d6b38c', { roughness: 0.95 }), { pos: [0.1, 0.2, -0.05], rot: [0, 0.4, 0] }));
     cover.position.set(x, h + 0.04, 0);
+    cover.userData.noBake = true;
     g.add(cover);
     covers.push(cover);
   }
@@ -559,6 +561,7 @@ export function keepsakeShelf(w = 1.7, rows = 2, perRow = 5) {
   const outline = mat('#e5d6c3', { roughness: 1, transparent: true, opacity: 0.7 });
   for (const s of g.userData.slots) {
     const ring = mesh(torus(0.09, 0.008, 4, 24), outline, { pos: [s.x, s.y + 0.006, s.z], rot: [Math.PI / 2, 0, 0], cast: false });
+    ring.userData.noBake = true;
     g.add(ring);
     s.ring = ring;
   }

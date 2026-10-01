@@ -13,6 +13,7 @@ import { FLOOR0 } from './house.js';
 import { mat } from '../gfx/materials.js';
 import { rbox, cyl, sphere, mesh } from '../gfx/geo.js';
 import { mulberry32 } from '../core/util.js';
+import { bakeGroup } from '../gfx/bake.js';
 
 const PI = Math.PI;
 const IN = T / 2 + 0.01; // wall-mounted things sit just off the wall surface
@@ -369,6 +370,8 @@ export class Furnisher {
       if (!kit) {
         kit = id === 'gate' ? gate() : id === 'porch' ? porch() : id === 'underside' ? underside() : BUILDERS[id]();
         this.kits.set(id, kit);
+        // each piece of furniture is merged on its own (so it can still move)
+        for (const o of kit.group.children) if (!o.userData.noBake) bakeGroup(o);
         // register wall-mounted things on exterior walls so they pop with the cutaway
         for (const o of kit.group.children) {
           if (o.userData.wall) house.follow(id, o.userData.wall, o);
