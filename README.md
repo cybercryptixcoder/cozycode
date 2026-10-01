@@ -11,7 +11,7 @@ There are two pages:
 | Page | What it is |
 | --- | --- |
 | `index.html` | **The game.** The Nook (main room) and the Post Room, with six sproutlings living their lives. |
-| `critter.html` | **Critter Studio.** One sproutling on a little stage, with every animation, expression and mood on buttons, so the character can be looked at on its own. |
+| `critter.html` | **Critter Studio.** One sproutling on a little stage, with every animation, eye shape, mouth and mood on buttons, so the character can be looked at on its own. Invite friends onto the stage, recolor them, swap the sprout for a leaf / antenna / flower. |
 
 ## Running it
 
@@ -51,14 +51,18 @@ It's an idle game: mostly you watch, poke, and say things.
   or by dragging the background. The camera always looks into one corner of the
   cuboid room; the two walls in front of you sink down (dollhouse cutaway) and
   rise again when you turn. Each corner has its own name and job.
-- **Scroll / pinch** to zoom in toward a spot.
+- **Scroll / pinch** to zoom in toward a spot. The four little dots next to the
+  room name are a mini-map: click one to turn to that corner.
+- **Double-click** a sproutling to follow it around.
 - **Click a sproutling** to boop it and open its card (mood, what it's up to,
   its needs). Boop it a few times and see what happens.
 - **Rub** your cursor back and forth over one to **pet** it.
 - **Drag** one to pick it up — its feet dangle and kick — and drop it anywhere.
+- With one selected, **click the floor** to send it there.
 - **Click things**: the gramophone (music + dance party), lamps, plants, the
   idea board, today's chalkboard, the letter wall, the bed, the door…
-- **Talk** in the little text box at the bottom. Try:
+- **Talk** in the little text box at the bottom (press Enter or / to jump to
+  it). Try:
   `hi everyone!`, `idea: a tiny greenhouse`, `todo: water the plants`,
   `letter: thank you!`, `dance party`, `good night`, `wake up`, `come here`,
   `tea time`, `new friend named Waffle`, a sproutling's name, or anything else.

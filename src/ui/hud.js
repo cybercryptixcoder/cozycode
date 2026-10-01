@@ -107,6 +107,7 @@ export class HUD {
       <div class="bubbles"></div>
       <div class="panel-wrap hidden"><div class="panel"><button class="x">${ICON.close}</button><div class="panel-body"></div></div></div>
       <div class="iris"></div>
+      <div class="titlecard"><b></b><span></span></div>
     `;
     document.body.appendChild(root);
     const $ = (s) => root.querySelector(s);
@@ -151,6 +152,14 @@ export class HUD {
       handleMessage(this.world, text, this.selected);
       root.querySelector('.suggest').classList.add('used');
     };
+    window.addEventListener('keydown', (e) => {
+      const typing = document.activeElement === this.el.input;
+      if (!typing && (e.key === 'Enter' || e.key === '/') && !this.panel) {
+        e.preventDefault();
+        this.el.input.focus();
+      } else if (typing && e.key === 'Escape') this.el.input.blur();
+      else if (e.key === 'Escape' && this.panel) this.closePanel();
+    });
     this.el.input.addEventListener('focus', () => root.querySelector('.suggest').classList.add('show'));
     this.el.input.addEventListener('blur', () => setTimeout(() => root.querySelector('.suggest').classList.remove('show'), 200));
     root.querySelectorAll('.suggest button').forEach((b) => {
@@ -503,6 +512,13 @@ export class HUD {
 
   onRoomChanged(room) {
     this.el.room.textContent = room.name;
+    // a little title card
+    const tc = this.root.querySelector('.titlecard');
+    tc.querySelector('b').textContent = room.name;
+    tc.querySelector('span').textContent = room.id === 'post' ? 'where letters come and go' : 'home sweet home';
+    tc.classList.remove('show');
+    void tc.offsetWidth;
+    tc.classList.add('show');
     room.group.add(this._ring);
     this.updateCorner();
     this.renderRoster();

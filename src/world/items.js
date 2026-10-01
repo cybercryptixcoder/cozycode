@@ -27,6 +27,15 @@ export function makeItem(kind, opts = {}) {
 }
 
 function makeBook(color = pick(BOOK_COLORS)) {
+  return withOffset(makeBookInner(color), [0, -0.13, 0.03]);
+}
+
+function withOffset(obj, off) {
+  obj.userData.holdOffset = off;
+  return obj;
+}
+
+function makeBookInner(color) {
   const g = group({});
   const cover = mat(color, { roughness: 0.6 });
   const pages = mat(COLORS.paper, { roughness: 0.9 });
@@ -39,7 +48,7 @@ function makeBook(color = pick(BOOK_COLORS)) {
   flip.position.y = 0.035;
   flip.visible = false;
   g.add(left, right, flip);
-  g.rotation.x = -0.9;
+  g.rotation.x = -1.05;
   g.position.y = 0.02;
   let t = -1;
   g.userData.flip = () => {

@@ -479,7 +479,9 @@ export class Critter {
     else if (mode === 'side') this.hand.position.set(0.5, 0.25, 0.18);
     else this.hand.position.set(0, 0.36, 0.5);
     this.hand.add(itemObject);
-    itemObject.position.set(0, 0, 0);
+    const off = itemObject.userData.holdOffset;
+    if (off && mode === 'front') itemObject.position.set(off[0], off[1], off[2]);
+    else itemObject.position.set(0, 0, 0);
     itemObject.rotation.set(0, 0, 0);
   }
 
