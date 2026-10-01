@@ -34,7 +34,7 @@ export function structureFor(unlocks) {
 
 export class IslandWorld {
   constructor(container, opts = {}) {
-    this.engine = new Engine(container, { fov: 30, post: false, quality: opts.quality, preserveDrawingBuffer: true });
+    this.engine = new Engine(container, { fov: 30, post: false, quality: opts.quality, preserveDrawingBuffer: true, stencil: true });
     this.engine.renderer.toneMapping = THREE.NeutralToneMapping;
     this.engine.scene.environmentIntensity = 0.4;
     this.scene = this.engine.scene;

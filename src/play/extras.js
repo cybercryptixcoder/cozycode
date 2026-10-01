@@ -248,7 +248,7 @@ export class Docked {
     if (v) {
       this._q = e.quality;
       e.setQuality('low');
-      g.world.rig.zoom.target = 1.15;
+      g.world.rig.zoom.target = 0.9;
       const close = () => {
         this.set(false);
         document.removeEventListener('click', onClick, true);

@@ -89,6 +89,7 @@ export class Engine {
       preserveDrawingBuffer: !!opts.preserveDrawingBuffer,
       powerPreference: 'high-performance',
       alpha: false,
+      stencil: !!opts.stencil,
     }));
     renderer.setPixelRatio(this._pixelRatio());
     renderer.outputColorSpace = THREE.SRGBColorSpace;
