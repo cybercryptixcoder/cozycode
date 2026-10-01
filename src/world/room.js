@@ -292,6 +292,25 @@ export class Room {
     bottom.position.y = -0.78;
     bottom.castShadow = false;
     this.group.add(bottom);
+
+    // soft drop shadow beneath the floating diorama
+    const sc = document.createElement('canvas');
+    sc.width = sc.height = 128;
+    const sg = sc.getContext('2d');
+    const grd = sg.createRadialGradient(64, 64, 10, 64, 64, 64);
+    grd.addColorStop(0, 'rgba(110,60,70,0.34)');
+    grd.addColorStop(0.55, 'rgba(110,60,70,0.16)');
+    grd.addColorStop(1, 'rgba(110,60,70,0)');
+    sg.fillStyle = grd;
+    sg.fillRect(0, 0, 128, 128);
+    const st = new THREE.CanvasTexture(sc);
+    st.colorSpace = THREE.SRGBColorSpace;
+    const drop = new THREE.Mesh(new THREE.PlaneGeometry((w + lip * 2) * 1.5, (d + lip * 2) * 1.5), new THREE.MeshBasicMaterial({ map: st, transparent: true, depthWrite: false }));
+    drop.rotation.x = -Math.PI / 2;
+    drop.position.y = -1.6;
+    drop.userData.noAO = true;
+    drop.renderOrder = -2;
+    this.group.add(drop);
   }
 
   /** Place a prop on the floor. footprint: {w,d} rect or {r} circle (in prop local space). */

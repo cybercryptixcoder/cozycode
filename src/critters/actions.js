@@ -495,6 +495,8 @@ export const ACTIONS = {
         c.sproutX.impulse(-3);
         if (chance(0.5)) sfx(c, 'mumble');
       }
+      // nightcap pops on
+      c.nightcap(Math.min(1, easeOutBack(Math.min(1, a.t / 0.6))) * a.w);
       // sleep bubble: grows with each breath... and eventually pops
       const bd = a.data;
       bd.bub = (bd.bub ?? -rand(1, 3)) + 1 / 60;
@@ -511,6 +513,7 @@ export const ACTIONS = {
     },
     end(c) {
       c.noseBubble(0);
+      c._capOff = true;
     },
   },
 

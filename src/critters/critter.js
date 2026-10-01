@@ -581,6 +581,11 @@ export class Critter {
     }
 
     this.item?.userData.update?.(dt);
+    if (this._capOff && this._cap) {
+      const k = Math.max(0, this._capK - dt * 2.5);
+      this.nightcap(k);
+      if (k <= 0) this._capOff = false;
+    }
 
     // held item arm poses
     if (this.item && !p.armsOverride) {
@@ -942,6 +947,64 @@ export class Critter {
       }
     }
     return null;
+  }
+
+  /** A floppy nightcap for naps. k: 0 hidden .. 1 on. */
+  nightcap(k) {
+    if (!this._cap && k <= 0.01) return;
+    if (!this._cap) {
+      const capCol = new THREE.Color(this.color).offsetHSL(0.5, -0.15, 0.08);
+      const capMat = new THREE.MeshStandardMaterial({ color: capCol, roughness: 0.9 });
+      const stripe = new THREE.MeshStandardMaterial({ color: '#fff7ec', roughness: 0.95 });
+      const cap = new THREE.Group();
+      // brim
+      const brim = new THREE.Mesh(new THREE.TorusGeometry(0.245, 0.06, 10, 32), stripe);
+      brim.rotation.x = Math.PI / 2;
+      cap.add(brim);
+      // floppy cone, built from a few segments so the tip can droop
+      const segs = [];
+      let parent = cap;
+      const radii = [0.26, 0.18, 0.11, 0.05];
+      for (let i = 0; i < 3; i++) {
+        const seg = new THREE.Group();
+        seg.position.y = i === 0 ? 0 : 0.16;
+        const m = new THREE.Mesh(new THREE.CylinderGeometry(radii[i + 1], radii[i], 0.17, 18, 1, true), i === 1 ? stripe : capMat);
+        m.position.y = 0.085;
+        m.material.side = THREE.DoubleSide;
+        seg.add(m);
+        // round knuckle so the bends never show a gap
+        const joint = new THREE.Mesh(new THREE.SphereGeometry(radii[i + 1], 14, 10), i === 1 ? stripe : capMat);
+        joint.position.y = 0.17;
+        seg.add(joint);
+        parent.add(seg);
+        segs.push(seg);
+        parent = seg;
+      }
+      const pom = new THREE.Mesh(new THREE.SphereGeometry(0.055, 12, 10), stripe);
+      pom.position.y = 0.18;
+      parent.add(pom);
+      cap.traverse((o) => o.isMesh && (o.castShadow = true));
+      cap.position.set(0.02, BODY.height - 0.17, -0.02);
+      cap.rotation.z = -0.16;
+      cap.rotation.x = -0.08;
+      this.bodyPivot.add(cap);
+      this._cap = cap;
+      this._capSegs = segs;
+      this._capK = 0;
+    }
+    this._capK = k;
+    const s = Math.max(0.001, k);
+    this._cap.scale.setScalar(s);
+    this._cap.visible = k > 0.01;
+    // the tip flops with the body's motion
+    const flop = 0.62 + this.sproutZ.x * 0.6 + Math.sin(this.time * 1.3) * 0.04;
+    this._capSegs.forEach((seg, i) => {
+      if (i > 0) {
+        seg.rotation.z = -flop * (0.45 + i * 0.4);
+        seg.rotation.x = this.sproutX.x * 0.3;
+      }
+    });
+    if (this.topPivot) this.topPivot.visible = k < 0.5;
   }
 
   /** The classic sleep bubble. scale 0 hides it. */

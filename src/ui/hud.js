@@ -542,9 +542,14 @@ export class HUD {
     this.root.querySelector('.sound').classList.toggle('off', !sound.sfxOn);
     const d = this.world.daylight;
     const preset = TIME_PRESETS.find((p) => p.id === d.presetId);
-    const night = d.isNight || d.phase === 'evening';
-    this.el.time.querySelector('.ico').innerHTML = night ? ICON.moon : ICON.sun;
-    this.el.time.querySelector('.lbl').textContent = preset?.id === 'auto' ? clockLabel() : preset?.label;
+    const night = d.isNight;
+    const ico = night ? 'moon' : 'sun';
+    if (this._ico !== ico) {
+      this._ico = ico;
+      this.el.time.querySelector('.ico').innerHTML = ICON[ico];
+    }
+    const lbl = preset?.id === 'auto' ? clockLabel() : preset?.label;
+    if (this._lbl !== lbl) this.el.time.querySelector('.lbl').textContent = this._lbl = lbl;
   }
 
   update(dt) {
