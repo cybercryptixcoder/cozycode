@@ -825,7 +825,7 @@ export class Critter {
     let target = null;
     if (this.lookTarget && time < this.lookUntil) {
       target = this.lookTarget.isVector3 ? this.lookTarget : this.lookTarget.position || null;
-      if (this.lookTarget.root) target = _v2.copy(this.lookTarget.root.position).setY(0.6);
+      if (this.lookTarget.root) target = _v2.copy(this.lookTarget.root.position).setY(this.lookTarget.root.position.y + 0.6);
     } else {
       this.lookTarget = null;
     }
@@ -1028,7 +1028,7 @@ export class Critter {
   }
 
   footPos(out = new THREE.Vector3()) {
-    return out.copy(this.root.position).setY(0.03);
+    return out.copy(this.root.position).setY(this.root.position.y + 0.03);
   }
 
   headPos(out = new THREE.Vector3(), extra = 0) {

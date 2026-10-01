@@ -83,8 +83,10 @@ export class Engine {
   constructor(container, opts = {}) {
     this.container = container;
     this.quality = opts.quality || detectQuality();
+    this.direct = opts.post === false; // render straight to screen, no post stack
     const renderer = (this.renderer = new THREE.WebGLRenderer({
-      antialias: this.quality === 'low',
+      antialias: this.direct || this.quality === 'low',
+      preserveDrawingBuffer: !!opts.preserveDrawingBuffer,
       powerPreference: 'high-performance',
       alpha: false,
     }));
@@ -106,7 +108,7 @@ export class Engine {
     this.scene.environment = this.envMap;
     this.scene.environmentIntensity = 0.55;
 
-    this._buildComposer();
+    if (!this.direct) this._buildComposer();
 
     this.updaters = new Set();
     this._last = performance.now();
@@ -166,8 +168,10 @@ export class Engine {
     if (q === this.quality) return;
     this.quality = q;
     this.renderer.setPixelRatio(this._pixelRatio());
-    this.composer.dispose?.();
-    this._buildComposer();
+    if (!this.direct) {
+      this.composer.dispose?.();
+      this._buildComposer();
+    }
     this._w = this._h = null; // force a resize of the new targets
     this.resize();
     this.onQuality?.(q);
@@ -184,10 +188,12 @@ export class Engine {
     this.renderer.domElement.style.height = h + 'px';
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
-    const pr = this.renderer.getPixelRatio();
-    this.composer.setPixelRatio(pr);
-    this.composer.setSize(w, h);
-    this.gradePass.uniforms.uRes.value.set(w * pr, h * pr);
+    if (!this.direct) {
+      const pr = this.renderer.getPixelRatio();
+      this.composer.setPixelRatio(pr);
+      this.composer.setSize(w, h);
+      this.gradePass.uniforms.uRes.value.set(w * pr, h * pr);
+    }
     this.onResize?.(w, h);
   }
 
@@ -207,7 +213,9 @@ export class Engine {
     const loop = () => {
       this._raf = requestAnimationFrame(loop);
       const now = performance.now();
-      const dt = Math.min((now - this._last) / 1000, 1 / 15);
+      // optional frame cap (the docked mode runs at a gentle, battery-friendly rate)
+      if (this.maxFps && now - this._last < 1000 / this.maxFps - 2) return;
+      const dt = Math.min((now - this._last) / 1000, this.maxFps ? 0.25 : 1 / 15);
       this._last = now;
       this.time += dt;
       this.frame++;
@@ -226,6 +234,10 @@ export class Engine {
   }
 
   render() {
+    if (this.direct) {
+      this.renderer.render(this.scene, this.camera);
+      return;
+    }
     this.gradePass.uniforms.uTime.value = (this.frame % 64) * 1.37;
     this.composer.render();
   }

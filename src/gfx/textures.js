@@ -648,3 +648,41 @@ export function gradientCanvasTexture(stops, w = 4, h = 256) {
 }
 
 export { shade, mix, clamp, lerp };
+
+/** Exterior clapboard siding (muted), with a stone band at the bottom. */
+export function sidingTexture({ base = '#efe0cc', stone = '#c9b9a8', unit = 2, height = 3, seed = 2 } = {}) {
+  const key = `siding:${base}:${stone}:${unit}:${height}`;
+  if (cache.has(key)) return cache.get(key);
+  const ppu = 160;
+  const W = Math.round(unit * ppu);
+  const Hh = Math.round(height * ppu);
+  const c = makeCanvas(W, Hh);
+  const g = c.getContext('2d');
+  const rng = mulberry32(seed);
+  g.fillStyle = base;
+  g.fillRect(0, 0, W, Hh);
+  const board = 0.22 * ppu;
+  for (let y = 0; y < Hh; y += board) {
+    g.fillStyle = shade(base, (rng() - 0.5) * 0.03);
+    g.fillRect(0, y, W, board);
+    g.fillStyle = 'rgba(120,90,70,0.16)';
+    g.fillRect(0, y + board - 3, W, 3);
+    g.fillStyle = 'rgba(255,255,255,0.18)';
+    g.fillRect(0, y, W, 2);
+  }
+  // stone foundation band
+  const sb = 0.35 * ppu;
+  g.fillStyle = stone;
+  g.fillRect(0, Hh - sb, W, sb);
+  for (let i = 0; i < 9; i++) {
+    g.fillStyle = shade(stone, (rng() - 0.5) * 0.08);
+    const x = (i / 9) * W;
+    roundRect(g, x + 2, Hh - sb + 4, W / 9 - 4, sb - 8, 8);
+    g.fill();
+  }
+  const t = canvasTexture(c, { repeat: true });
+  t.wrapT = THREE.ClampToEdgeWrapping;
+  t.repeat.set(1 / unit, 1 / height);
+  cache.set(key, t);
+  return t;
+}
