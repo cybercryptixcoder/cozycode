@@ -61,6 +61,7 @@ export class Director {
   }
 
   ticker(text, at = clock.now()) {
+    text = text.toLowerCase();
     const tk = this.s.ticker;
     tk.last = [{ at, text }, ...(tk.last || [])].slice(0, 30);
     bus.emit('ticker', text);
@@ -104,9 +105,22 @@ export class Director {
     if (s.specialist.day !== dk) {
       s.specialist.day = dk;
       s.specialist.used = 0;
+      this._prune(at);
     }
     this._growth(at);
     this._mailRounds(at);
+  }
+
+  /** Keep the save small: forget long-gone tosses and old ticked chores. */
+  _prune(at) {
+    const s = this.s;
+    s.threads = s.threads.filter((t) => {
+      const age = at - (t.tossedAt || t.doneAt || t.createdAt);
+      if (t.status === 'tossed' && age > 14 * DAY) return false;
+      if (t.kind === 'todo' && t.status === 'ticked' && age > 3 * DAY) return false;
+      return true;
+    });
+    for (const t of s.threads) if (t.log && t.log.length > 20 && (t.status === 'placed' || t.status === 'letgo' || t.status === 'tossed')) t.log = t.log.slice(-12);
   }
 
   // ------------------------------------------------------------ events

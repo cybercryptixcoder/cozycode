@@ -7,6 +7,10 @@ import * as THREE from 'three';
 import { bus } from '../core/events.js';
 import { clock } from './clock.js';
 import { mulberry32, uid } from '../core/util.js';
+import { fairyLights } from '../world/props/decor.js';
+import { mat } from '../gfx/materials.js';
+import { sphere, cyl, mesh } from '../gfx/geo.js';
+import { PORCH } from '../island/layout.js';
 
 // ------------------------------------------------------------------ notifications
 export class Notifier {
@@ -139,8 +143,46 @@ export class Seasons {
       const mode = w.weather === 'snow' ? 'snow' : w.weather === 'rain' ? 'rain' : w.season === 'autumn' ? 'leaves' : null;
       if (mode !== this.mode) this._setMode(mode);
       this.weather = w;
+      this._holiday(w.holiday);
     }
     if (this.points) this._animate(dt);
+  }
+
+  /** Holiday touches on the porch (they come and go by themselves). */
+  _holiday(h) {
+    const levels = this.world.levels[0];
+    if (this._hol && this._hol.userData.kind !== h) {
+      levels.remove(this._hol);
+      this._hol = null;
+    }
+    if (!h || this._hol) {
+      if (this._hol?.userData.lights) this.world.lamps.glows.includes(this._hol.userData.lights) || this.world.lamps.glows.push(this._hol.userData.lights);
+      return;
+    }
+    const g = new THREE.Group();
+    g.userData.kind = h;
+    if (h === 'winter-lights') {
+      const fl = fairyLights(PORCH.x1 - PORCH.x0 - 0.4, 0.18, 16, ['#ffd27a', '#ffe9a8', '#ff9db5', '#bfe6ff']);
+      fl.position.set((PORCH.x0 + PORCH.x1) / 2, 0.15 + 0.95, PORCH.z1 - 0.05);
+      g.add(fl);
+      g.userData.lights = fl;
+      this.world.lamps.glows.push(fl);
+    } else if (h === 'pumpkins') {
+      const orange = mat('#e8913f', { roughness: 0.6 });
+      for (const [x, s] of [
+        [PORCH.x0 + 0.5, 1],
+        [PORCH.x0 + 0.95, 0.7],
+        [PORCH.x1 - 0.5, 0.85],
+      ]) {
+        const p = new THREE.Group();
+        p.add(mesh(sphere(0.18 * s, 14, 10), orange, { scale: [1, 0.78, 1] }));
+        p.add(mesh(cyl(0.02, 0.025, 0.08, 6), mat('#6b8a46'), { pos: [0, 0.16 * s, 0] }));
+        p.position.set(x, 0.15 + 0.13 * s, PORCH.z0 + 0.4);
+        g.add(p);
+      }
+    }
+    levels.add(g);
+    this._hol = g;
   }
 
   _setMode(mode) {

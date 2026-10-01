@@ -380,7 +380,8 @@ export class Arrivals {
     if ((!s.mail.flag || !gate) && this.bird.state === 'perched') this.bird.leave();
     // the big balloon is moored while there's specialist budget left today
     const avail = this.game.director.specialistAvailable();
-    if (gate && avail && this.big.state === 'away') this.big.moor(true);
+    if (gate && avail && this.big.state === 'away') this.big.moor(!this._synced || !this.game.visible);
+    this._synced = true;
     if ((!avail || !gate) && this.big.state === 'moored' && !s.specialist.here) this.big.depart();
     // visitors waiting near the gate
     for (const v of s.visitors) {

@@ -238,7 +238,8 @@ export class Scenery {
   _ensurePedestal(t, spot, ws) {
     let o = this.placed.get(t.id);
     if (o && o.userData.pedestal) {
-      o.position.set(spot.x, 0, spot.z);
+      const pl = this.s.placements?.[`artifact:${t.id}`];
+      if (!this.game.arrange?.moving) o.position.set(pl ? pl.x : spot.x, 0, pl ? pl.z : spot.z);
       return;
     }
     if (o) o.parent?.remove(o);
@@ -250,9 +251,11 @@ export class Scenery {
     o.add(thing);
     const plate = labelPlate(t.title.replace(/^the /, ''));
     ped.userData.label.add(plate);
-    o.position.set(spot.x, 0, spot.z);
+    const pl = this.s.placements?.[`artifact:${t.id}`];
+    o.position.set(pl ? pl.x : spot.x, 0, pl ? pl.z : spot.z);
     o.rotation.y = Math.atan2(3 - spot.x, -2.5 - spot.z) + Math.PI * 0.0;
     o.userData.interactive = { kind: 'artifact', thread: t.id };
+    o.userData.movable = { artifact: true, thread: t.id, name: t.title.replace(/^the /, '') };
     o.userData.thread = t.id;
     o.userData.pedestal = true;
     o.userData.thing = thing;
@@ -318,7 +321,12 @@ export class Scenery {
     // before there's an attic, shelved ideas wait in boxes on the stairs
     const kit = this.world.furnish.kit('attic') || this._stairStore();
     if (!kit) return;
-    const list = this.s.threads.filter((t) => t.status === 'attic').sort((a, b) => a.atticAt - b.atticAt);
+    const spots0 = kit.objects.boxSpots;
+    // the most recent ones are on top; older boxes are further back (not drawn)
+    const list = this.s.threads
+      .filter((t) => t.status === 'attic')
+      .sort((a, b) => a.atticAt - b.atticAt)
+      .slice(-spots0.length * 2);
     const ids = new Set(list.map((t) => t.id));
     for (const [id, b] of this.boxes) {
       if (!ids.has(id)) {
@@ -554,6 +562,17 @@ export class Scenery {
         this._unglow(o);
       }
     }
+  }
+
+  wiggle(o) {
+    const base = o.scale.clone();
+    sound.play('pop');
+    this.anim((k) => {
+      const a = Math.min(1, k / 0.5);
+      const s = Math.sin(a * Math.PI * 3) * (1 - a) * 0.12;
+      o.scale.set(base.x * (1 + s), base.y * (1 - s), base.z * (1 + s));
+      return a < 1;
+    });
   }
 
   popIn(o) {

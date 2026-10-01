@@ -39,9 +39,12 @@ export class RoomKit {
     obj.position.set(x, y, z);
     obj.rotation.y = rot;
     this.group.add(obj);
-    if (footprint) this.footprints.push({ x, z, rot, ...footprint });
+    if (footprint) this.footprints.push({ x, z, rot, name, ...footprint });
     if (name) this.objects[name] = obj;
-    if (movable) obj.userData.movable = { room: this.id, name };
+    if (movable) {
+      obj.userData.movable = { room: this.id, name };
+      obj.userData.interactive = { kind: 'furniture', room: this.id, name };
+    }
     obj.userData.room = this.id;
     return obj;
   }
@@ -97,8 +100,8 @@ function commons() {
   rug.rotation.y = PI / 4; // spots arc toward the default camera
   // the couch on the west wall (two nap spots)
   k.place(P.couch(1.7, '#cbbcab'), { x: 0.55, z: 4.95, rot: PI / 2, footprint: { w: 1.75, d: 0.85 }, name: 'couch', movable: true });
-  k.station({ id: 'couch-a', label: 'napping on the couch', activity: 'sleep', pos: { x: 0.62, z: 4.55 }, approach: { x: 1.35, z: 4.55 }, seat: 0.36, face: PI / 2, tags: ['rest'] });
-  k.station({ id: 'couch-b', label: 'curled up on the couch', activity: 'read', pos: { x: 0.62, z: 5.35 }, approach: { x: 1.35, z: 5.35 }, seat: 0.36, face: PI / 2, tags: ['rest', 'calm'] });
+  k.station({ id: 'couch-a', of: 'couch', label: 'napping on the couch', activity: 'sleep', pos: { x: 0.62, z: 4.55 }, approach: { x: 1.35, z: 4.55 }, seat: 0.36, face: PI / 2, tags: ['rest'] });
+  k.station({ id: 'couch-b', of: 'couch', label: 'curled up on the couch', activity: 'read', pos: { x: 0.62, z: 5.35 }, approach: { x: 1.35, z: 5.35 }, seat: 0.36, face: PI / 2, tags: ['rest', 'calm'] });
   // the toss bin by the rug
   k.place(P.tossBin(), { x: 4.05, z: 4.55, footprint: { r: 0.3 }, name: 'bin' });
   // unopened boxes, stacked in front of the boarded door
@@ -110,7 +113,7 @@ function commons() {
   k.lights.push(lamp);
   const pl = k.place(plant('leafy', { scale: 1.05, color: '#cfa48e', seed: 9 }), { x: 3.35, z: 5.62, footprint: { r: 0.28 }, movable: true, name: 'plant' });
   k.plants.push(pl);
-  k.station({ id: 'water-commons', label: 'watering the big plant', activity: 'water', pos: { x: 3.35, z: 4.95 }, face: 0, tags: ['care'] });
+  k.station({ id: 'water-commons', of: 'plant', label: 'watering the big plant', activity: 'water', pos: { x: 3.35, z: 4.95 }, face: 0, tags: ['care'] });
   // the south window, to gaze from
   k.station({ id: 'gaze-commons', label: 'watching the clouds go by', activity: 'gaze', pos: { x: 4.5, z: 5.3 }, face: 0, tags: ['calm'] });
   // the stairs: blocked except their foot
@@ -163,7 +166,7 @@ function study() {
   k.station({ id: 'browse-study', label: 'browsing the bookshelf', activity: 'browse', pos: { x: -1.0, z: -1.35 }, face: PI / 2, tags: ['research', 'calm'] });
   // an armchair for reading
   k.place(P.couch(0.95, '#bcc2b0'), { x: -1.2, z: -5.0, rot: -PI / 4 - PI / 2 + PI, footprint: { r: 0.55 }, movable: true, name: 'armchair' });
-  k.station({ id: 'read-study', label: 'reading in the armchair', activity: 'read', pos: { x: -1.25, z: -4.95 }, approach: { x: -1.9, z: -4.3 }, seat: 0.36, face: -PI * 0.75, tags: ['calm', 'research'] });
+  k.station({ id: 'read-study', of: 'armchair', label: 'reading in the armchair', activity: 'read', pos: { x: -1.25, z: -4.95 }, approach: { x: -1.9, z: -4.3 }, seat: 0.36, face: -PI * 0.75, tags: ['calm', 'research'] });
   // telescope spot (appears with the capability)
   k.objects.telescopeSpot = { x: -5.0, z: -5.0 };
   k.station({ id: 'gaze-study', label: 'looking out the window', activity: 'gaze', pos: { x: -4.6, z: -4.9 }, face: PI, tags: ['calm'] });
@@ -184,7 +187,7 @@ function kitchen() {
   k.objects.radioSpot = { obj: ctr, x: 0, y: ctr.userData.top, z: 0.45 };
   k.station({ id: 'tea-make', label: 'making a pot of tea', activity: 'cook', pos: { x: -1.25, z: 1.3 }, face: PI / 2, tags: ['chores', 'care'] });
   // a table for tea
-  k.place(P.roundTable(0.6, 0.42), { x: -3.1, z: 3.6, footprint: { r: 0.62 }, name: 'table', movable: true });
+  k.place(P.roundTable(0.6, 0.42), { x: -3.1, z: 3.6, footprint: { r: 0.62 }, name: 'table' });
   const cols = ['#d9c2a8', '#c9cfbd', '#d8c7d4', '#e0cfb4'];
   for (let i = 0; i < 4; i++) {
     const a = (i / 4) * PI * 2 + PI / 4;
@@ -195,7 +198,7 @@ function kitchen() {
   }
   const pl = k.place(plant('round', { scale: 0.9, color: '#c9b49a', seed: 6 }), { x: -5.5, z: 0.55, footprint: { r: 0.25 }, movable: true, name: 'plant' });
   k.plants.push(pl);
-  k.station({ id: 'water-kitchen', label: 'watering the herbs', activity: 'water', pos: { x: -4.9, z: 0.6 }, face: -PI / 2, tags: ['care'] });
+  k.station({ id: 'water-kitchen', of: 'plant', label: 'watering the herbs', activity: 'water', pos: { x: -4.9, z: 0.6 }, face: -PI / 2, tags: ['care'] });
   return k;
 }
 

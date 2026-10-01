@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { Engine } from '../core/engine.js';
 import { Daylight } from '../world/daylight.js';
 import { CHUNKS, ROOMS, H } from './layout.js';
-import { buildChunk, buildFence, buildMist, buildSkyClouds, chunkOutline, terrainCut, pointInChunk } from './terrain.js';
+import { buildChunk, buildFence, buildMist, buildSkyClouds, chunkOutline, terrainCut, pointInChunk, buildShaft } from './terrain.js';
 import { House, FLOOR0 } from './house.js';
 import { IslandCamera } from './camera.js';
 import { IslandInput } from './input.js';
@@ -246,6 +246,13 @@ export class IslandWorld {
     const z0 = Math.min(...ground.map((r) => r.z0)) - 0.1;
     const z1 = Math.max(...ground.map((r) => r.z1)) + 0.1;
     terrainCut.uCut.value.set(x0, z0, x1, z1);
+    const key = [x0, z0, x1, z1].join();
+    if (this._shaftKey !== key) {
+      this._shaftKey = key;
+      if (this.shaft) this.root.remove(this.shaft);
+      this.shaft = buildShaft(x0, z0, x1, z1, 3.2);
+      this.root.add(this.shaft);
+    }
   }
 
   isOnLand(x, z, margin = 0.6) {
@@ -259,6 +266,7 @@ export class IslandWorld {
     const cam = this.engine.camera;
     const below = cam.position.y < 0.2;
     terrainCut.uCutOn.value = below ? 1 : 0;
+    if (this.shaft) this.shaft.visible = below;
     this.house.update(dt, cam, { focus: this.focus });
     // actor/furniture levels ride along with the house's levels
     this.levels.forEach((g, l) => {

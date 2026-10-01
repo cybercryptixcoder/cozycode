@@ -482,8 +482,8 @@ body {
   text-shadow: none;
   text-align: center;
 }
-.stamp.ok,
-.stamp.meh {
+.verif.ok,
+.verif.meh {
   margin: 6px auto 0;
   width: fit-content;
   padding: 3px 10px;
@@ -492,10 +492,10 @@ body {
   border: 2px solid;
   transform: rotate(-4deg);
 }
-.stamp.ok {
+.verif.ok {
   color: #4f9a68;
 }
-.stamp.meh {
+.verif.meh {
   color: #b48a4a;
 }
 .receipts {
@@ -904,4 +904,15 @@ body.modal .hud-bottom {
 }
 .hud-bottom {
   transition: opacity 0.2s;
+}
+
+.metrics summary {
+  cursor: pointer;
+  text-align: left;
+}
+.metrics .mono {
+  text-align: left;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.6;
+  padding: 6px 4px;
 }

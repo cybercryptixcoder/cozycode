@@ -389,7 +389,7 @@ export class Cards {
     const front = el('div', 'card face front');
     front.appendChild(motifImage(t));
     front.appendChild(el('div', 'line', esc(t.title)));
-    front.appendChild(el('div', `stamp ${t.verified ? 'ok' : 'meh'}`, t.verified ? 'checked & working' : 'works, not fully checked'));
+    front.appendChild(el('div', `verif ${t.verified ? 'ok' : 'meh'}`, t.verified ? 'checked & working' : 'works, not fully checked'));
     front.appendChild(el('div', 'hint', 'tap to flip'));
     const back = el('div', 'card face back');
     back.appendChild(this._receipts(t));
@@ -402,8 +402,9 @@ export class Cards {
     });
     const ok = el('button', 'build', t.kind === 'research' ? 'onto the shelf' : t.verified ? 'onto a pedestal!' : 'onto the shelf');
     ok.addEventListener('click', () => {
-      this.d.accept(t.id);
       this.close(true);
+      if (t.kind === 'build' && t.verified) this.game.celebrate(t);
+      setTimeout(() => this.d.accept(t.id), t.kind === 'build' && t.verified ? 900 : 0);
     });
     node.appendChild(ok);
     this.show(node, { cls: 'finished' });
@@ -584,6 +585,9 @@ export class Cards {
         return bus.emit('ledger:open');
       case 'bird':
         sound.play('coo');
+        return;
+      case 'furniture':
+        this.game.scenery.wiggle(p);
         return;
     }
   }

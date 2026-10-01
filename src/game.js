@@ -2,6 +2,7 @@
 import './ui2/island.css';
 import { Game } from './play/game.js';
 import { Store } from './play/state.js';
+import { clock } from './play/clock.js';
 
 async function main() {
   const params = new URLSearchParams(location.search);
@@ -20,6 +21,7 @@ async function main() {
   if (t) game.world.daylight.setPreset(t);
   game.start();
   window.__game = game;
+  window.__clockOff = () => clock.offset;
   window.__world = game.world;
   window.__step = (n = 1) => {
     game.world.engine.stop();

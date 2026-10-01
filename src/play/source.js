@@ -26,7 +26,7 @@ export const DAY = 24 * HOUR;
 export const TUNING = {
   firstPitchAfter: 35 * 1000,
   secondPitchAfter: 5 * MIN,
-  pitchEveryDay: 85 * MIN, // mean gap, per ideas crew member, daytime
+  pitchEveryDay: 100 * MIN, // mean gap, per ideas crew member, daytime
   pitchEveryNight: 4 * HOUR,
   buildMinutes: [25, 100],
   researchMinutes: [20, 80],

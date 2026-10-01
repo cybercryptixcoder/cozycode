@@ -272,7 +272,8 @@ export class Shell {
     });
     more.append(colors, rename);
     node.appendChild(more);
-    this.game.cards.show(node, { cls: 'small', onClose: () => (c.brain.attending = 0) });
+    this.game.cards._presenterLook(c);
+    this.game.cards.show(node, { cls: 'small whispering', onClose: () => (c.brain.attending = 0) });
     setTimeout(() => input.focus(), 300);
   }
 
@@ -338,6 +339,11 @@ export class Shell {
       bus.emit('dock:toggle', true);
     });
     node.appendChild(dock);
+    // numbers for tuning (tucked away, never on the island itself)
+    const met = el('details', 'metrics');
+    met.appendChild(el('summary', 'small', 'numbers for tuning'));
+    met.appendChild(el('div', 'small mono', this._metrics()));
+    node.appendChild(met);
     const studio = el('a', 'small link', 'critter studio (internal tool)');
     studio.href = 'critter.html';
     node.appendChild(studio);
@@ -354,6 +360,24 @@ export class Shell {
     });
     node.appendChild(reset);
     this.game.cards.show(node, { cls: 'small' });
+  }
+
+  _metrics() {
+    const m = this.s.metrics;
+    const now = clock.now();
+    const week = m.opens.filter((o) => now - o.at < 7 * 86400000);
+    const days = Math.max(1, Math.min(7, (now - this.s.createdAt) / 86400000));
+    const quiet = week.filter((o) => !o.notified).length;
+    const fs = m.started ? (m.finished / m.started).toFixed(2) : '–';
+    const caps = this.s.taste.length;
+    return [
+      `opens per day: ${(week.length / days).toFixed(1)}`,
+      `opens without a notification: ${week.length ? Math.round((quiet / week.length) * 100) : 0}%`,
+      `homecomings skipped: ${m.homecomingSkips} of ${m.homecomings}`,
+      `finished ÷ started: ${fs} (${m.finished}/${m.started})`,
+      `notifications sent: ${m.notifications.length}`,
+      `taste log entries: ${caps}`,
+    ].join('<br>');
   }
 
   _applySettings(key) {

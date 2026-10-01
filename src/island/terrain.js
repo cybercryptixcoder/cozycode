@@ -280,6 +280,65 @@ export function buildMist(cx, cz, rx, rz, count = 14, seed = 9) {
   return g;
 }
 
+/**
+ * The walls of the cut under the house: seen from below, the ground floor
+ * opens onto a clean shaft through solid rock (a diorama cross-section).
+ */
+export function buildShaft(x0, z0, x1, z1, depth = 3.4) {
+  const g = new THREE.Group();
+  g.name = 'shaft';
+  const c = makeCanvas(64, 256);
+  const x = c.getContext('2d');
+  const grd = x.createLinearGradient(0, 0, 0, 256);
+  grd.addColorStop(0, '#8d6a52');
+  grd.addColorStop(0.12, '#b5927a');
+  grd.addColorStop(0.5, '#a08896');
+  grd.addColorStop(1, '#6f6486');
+  x.fillStyle = grd;
+  x.fillRect(0, 0, 64, 256);
+  const rng = mulberry32(5);
+  for (let i = 0; i < 260; i++) {
+    x.fillStyle = `rgba(${rng() < 0.5 ? '60,40,50' : '255,240,230'},${rng() * 0.12})`;
+    x.beginPath();
+    x.ellipse(rng() * 64, 30 + rng() * 226, 2 + rng() * 6, 1 + rng() * 3, 0, 0, TAU);
+    x.fill();
+  }
+  // a band of roots near the top
+  x.strokeStyle = 'rgba(110,80,55,0.6)';
+  x.lineWidth = 2;
+  for (let i = 0; i < 10; i++) {
+    x.beginPath();
+    const sx = rng() * 64;
+    x.moveTo(sx, 20);
+    x.bezierCurveTo(sx + 8, 50, sx - 8, 70, sx + rng() * 10, 90 + rng() * 40);
+    x.stroke();
+  }
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.wrapS = THREE.RepeatWrapping;
+  const m = new THREE.MeshStandardMaterial({ map: tex, roughness: 0.95, side: THREE.DoubleSide, emissive: '#2a1c30', emissiveIntensity: 0.25 });
+  const walls = [
+    [(x0 + x1) / 2, z0, x1 - x0, 0],
+    [(x0 + x1) / 2, z1, x1 - x0, Math.PI],
+    [x0, (z0 + z1) / 2, z1 - z0, Math.PI / 2],
+    [x1, (z0 + z1) / 2, z1 - z0, -Math.PI / 2],
+  ];
+  for (const [cx, cz, len, rot] of walls) {
+    tex.repeat.set(len / 2, 1);
+    const p = new THREE.Mesh(new THREE.PlaneGeometry(len, depth), m);
+    p.position.set(cx, -depth / 2 - 0.02, cz);
+    p.rotation.y = rot;
+    p.userData.noAO = true;
+    g.add(p);
+  }
+  // a faint warm glow from below the house
+  const glow = new THREE.PointLight('#ffcf9a', 2.2, 9, 1.5);
+  glow.position.set((x0 + x1) / 2, -1.2, (z0 + z1) / 2);
+  g.add(glow);
+  g.visible = false;
+  return g;
+}
+
 /** Drifting sky clouds around (and below) the island. */
 export function buildSkyClouds(count = 22) {
   const g = new THREE.Group();

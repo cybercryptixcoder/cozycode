@@ -484,12 +484,42 @@ export class Sound {
     if (!this.sfxOn || !this.ctx) return;
     this._ambT -= 0.06;
     if (this._ambT > 0) return;
-    if (this.ambience === 'morning' || this.ambience === 'day') {
-      this._ambT = rand(4, 11);
-      if (chance(0.7)) this._chirp();
-    } else if (this.ambience === 'night') {
+    const [room, time] = String(this.ambience || '').split(':');
+    const night = time === 'night' || this.ambience === 'night';
+    switch (room) {
+      case 'workshop':
+        // soft taps and a ratchet now and then
+        this._ambT = rand(1.4, 3.5);
+        for (let i = 0; i < Math.floor(rand(1, 4)); i++) this.noise({ dur: 0.03, gain: 0.012, t: i * rand(0.12, 0.2), filter: { type: 'bandpass', f: rand(1800, 3200), q: 4 } });
+        return;
+      case 'kitchen':
+        // the kettle simmering
+        this._ambT = rand(0.6, 1.4);
+        for (let i = 0; i < 3; i++) this.tone({ f0: rand(500, 900), f1: rand(900, 1300), dur: 0.05, gain: 0.004, t: i * rand(0.1, 0.3), reverb: 0.2 });
+        return;
+      case 'study':
+        // a clock, and a page
+        this._ambT = 1;
+        this.noise({ dur: 0.012, gain: 0.006, filter: { type: 'highpass', f: 3000, q: 1 } });
+        if (chance(0.06)) this.play('page');
+        return;
+      case 'gate':
+        this._ambT = rand(2, 5);
+        this.noise({ dur: 1.6, gain: 0.006, attack: 0.6, filter: { type: 'lowpass', f: 500, q: 0.7 }, reverb: 0.3 });
+        if (!night && chance(0.6)) this._chirp();
+        return;
+      case 'under':
+        this._ambT = 2.4;
+        this.tone({ type: 'sine', f0: 55, dur: 2.4, gain: 0.02, attack: 0.8, reverb: 0.4 });
+        if (chance(0.3)) this.tone({ f0: rand(1200, 1600), dur: 0.08, gain: 0.004, t: rand(0, 1), reverb: 0.5 });
+        return;
+    }
+    if (night) {
       this._ambT = rand(1.2, 3);
       this._cricket();
+    } else if (time === 'morning' || time === 'day' || this.ambience === 'morning' || this.ambience === 'day') {
+      this._ambT = rand(4, 11);
+      if (chance(0.7)) this._chirp();
     } else this._ambT = 5;
   }
 

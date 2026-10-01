@@ -18,6 +18,7 @@ import { Mail } from '../ui2/mail.js';
 import { Shell } from '../ui2/shell.js';
 import { Homecoming } from './homecoming.js';
 import { Notifier, Seasons, Docked, inferFacts } from './extras.js';
+import { Arrange } from './arrange.js';
 import { line } from './lines.js';
 import { bus } from '../core/events.js';
 import { sound } from '../core/audio.js';
@@ -53,6 +54,7 @@ export class Game {
     this.notifier = new Notifier(this);
     this.seasons = new Seasons(this);
     this.docked = new Docked(this);
+    this.arrange = new Arrange(this);
   }
 
   get s() {
@@ -103,6 +105,8 @@ export class Game {
   }
 
   afterStructure() {
+    this.arrange.applyPlacements();
+    this.world.buildNav();
     this.crew._rugSpots = null;
     this.scenery.drawMap();
     this.scenery.drawRoster();
@@ -136,6 +140,8 @@ export class Game {
   /** The player just arrived (launch or coming back to the tab). */
   opened(away, { first = false } = {}) {
     const s = this.s;
+    const f = inferFacts(s);
+    if (f.length) s.facts.push(...f);
     s.metrics.opens.push({ at: clock.now(), away: Math.round(away / 1000), notified: !!this._notifiedSince });
     if (s.metrics.opens.length > 400) s.metrics.opens.splice(0, s.metrics.opens.length - 400);
     this._notifiedSince = false;
@@ -171,6 +177,7 @@ export class Game {
     this.director.advance(now, { live: true });
     if (!this.busy && this.stager.pending().length) this.stager.playNext();
     this.arrivals.sync();
+    this._ambience();
     // now and then, a ghostly guess about you shows up in your room
     this._inferT = (this._inferT || 0) + 1;
     if (this._inferT > 600) {
@@ -185,6 +192,43 @@ export class Game {
       this._ledgerT = 0;
       this.scenery.drawLedger();
     }
+  }
+
+  _ambience() {
+    const w = this.world;
+    const h = w.clockHour();
+    const time = h < 6 || h >= 21 ? 'night' : h < 11 ? 'morning' : 'day';
+    const below = w.engine.camera.position.y < 0.2;
+    const room = below ? 'under' : w.focus || { se: 'commons', ne: 'workshop', nw: 'study', sw: 'kitchen' }[w.rig.viewCorner];
+    sound.setAmbience(`${room}:${time}`);
+    // rooms viewed (for the taste log): each time the open room changes
+    if (room !== this._lastViewed) {
+      this._lastViewed = room;
+      this.director.taste('view', { room });
+    }
+  }
+
+  /** The biggest celebration: watch the pedestal rise for a verified build. */
+  celebrate(t) {
+    const w = this.world;
+    const ws = w.house.byId.workshop;
+    if (!ws || this.homecoming.active) return;
+    const corner = w.rig.k;
+    const prevFocus = w.focus;
+    w.rig.goToCorner(1);
+    w.focus = 'workshop';
+    w.rig.focusOn(ws, ws.base);
+    this.modal = true;
+    // the builder hops over to watch
+    const c = this.crew.critter(t.owner);
+    if (c && c.level === 0) c.brain.run([...(c.brain.route({ level: 0, x: 3.6, z: -3.8 }) || []), { type: 'act', name: 'cheer' }, { type: 'act', name: 'admire' }], `admiring ${t.title}`);
+    setTimeout(() => {
+      this.modal = false;
+      w.focus = prevFocus;
+      if (prevFocus) w.rig.focusOn(w.house.byId[prevFocus], w.house.byId[prevFocus].base);
+      else w.rig.clearFocus();
+      w.rig.goToCorner(corner);
+    }, 4200);
   }
 
   // ------------------------------------------------------------ presenting
@@ -317,7 +361,7 @@ export class Game {
       this.scenery.drawRoster();
       return c;
     };
-    if (o.live && this.visible) balloon.arrive(spawn);
+    if (o.live && this.visible && balloon.state !== 'moored') balloon.arrive(spawn);
     else spawn();
   }
 
