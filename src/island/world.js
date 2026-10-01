@@ -8,6 +8,11 @@ import { buildChunk, buildFence, buildMist, buildSkyClouds, chunkOutline, terrai
 import { House, FLOOR0 } from './house.js';
 import { IslandCamera } from './camera.js';
 import { IslandInput } from './input.js';
+import { Furnisher } from './furnish.js';
+import { FloorNav, wallSegments } from './nav.js';
+import { PORCH } from './layout.js';
+import { FX } from '../gfx/fx.js';
+import { swayPlants } from '../world/props/furniture.js';
 import { clamp, easeOutBack, smoothstep } from '../core/util.js';
 
 export function structureFor(unlocks) {
@@ -54,6 +59,21 @@ export class IslandWorld {
     this.engine.onResize = () => this.rig.fit();
     this.lamps = { lights: [], glows: [] };
     this.structure = null;
+    // furniture + actors live in persistent per-level groups that follow the house's levels
+    this.levels = [0, 1, 2].map((l) => {
+      const g = new THREE.Group();
+      g.name = `actors:${l}`;
+      this.root.add(g);
+      return g;
+    });
+    this.furnish = new Furnisher(this);
+    this.navs = [];
+    this.fx = new FX(this.scene);
+  }
+
+  /** Local hour of the day (real clock unless a preset is forced). */
+  clockHour() {
+    return this.daylight.currentHour();
   }
 
   /** Bring the world's structure in line with the unlock state. */
@@ -65,6 +85,8 @@ export class IslandWorld {
     this.structure = st;
     this.structureKey = key;
     this.house.build(st);
+    this.furnish.sync(st);
+    this.lamps = this.furnish.lamps;
     // land chunks
     for (const id of st.chunks) {
       if (this.chunks.has(id)) continue;
@@ -94,7 +116,84 @@ export class IslandWorld {
       this.mist.userData.leaving = 1;
     }
     this._updateBounds();
+    this.buildNav();
     return st;
+  }
+
+  /** Floor height + walkable grids for every level. */
+  levelY(level) {
+    return FLOOR0 + level * H;
+  }
+
+  /** Height of the walking surface at x/z on a level (ground: house floor vs grass). */
+  groundY(level, x, z) {
+    if (level > 0) return this.levelY(level);
+    if (x > PORCH.x0 - 0.05 && x < PORCH.x1 + 0.05 && z > PORCH.z0 - 0.1 && z < PORCH.z1 + 0.05) return FLOOR0;
+    for (const r of this.house.rooms) if (r.level === 0 && x > r.x0 - 0.12 && x < r.x1 + 0.12 && z > r.z0 - 0.12 && z < r.z1 + 0.12) return FLOOR0;
+    return 0.01;
+  }
+
+  buildNav() {
+    const rooms = this.house.rooms;
+    const inRoom = (r, x, z) => x > r.x0 && x < r.x1 && z > r.z0 && z < r.z1;
+    this.navs = [];
+    // ground: the whole island
+    const g = new FloorNav(-9, -14, 15, 14, 0.25);
+    const ground = rooms.filter((r) => r.level === 0);
+    g.buildWith(
+      (x, z) => {
+        for (const r of ground) if (inRoom(r, x, z)) return !r.sealed;
+        if (x > PORCH.x0 && x < PORCH.x1 && z > PORCH.z0 && z < PORCH.z1) return true;
+        return this.isOnLand(x, z, 0.75);
+      },
+      this.furnish.footprintsFor(0),
+      wallSegments(this.house, 0)
+    );
+    this.navs[0] = g;
+    for (const level of [1, 2]) {
+      const rs = rooms.filter((r) => r.level === level && !r.sealed);
+      if (!rs.length) continue;
+      const n = new FloorNav(-6.5, -6.5, 6.5, 6.5, 0.25);
+      n.buildWith((x, z) => rs.some((r) => inRoom(r, x, z)), this.furnish.footprintsFor(level), wallSegments(this.house, level));
+      this.navs[level] = n;
+    }
+  }
+
+  /** Portals between levels that exist right now: [{id, kind, a:{level,x,z}, b:{level,x,z}, path}] */
+  portals() {
+    const out = [];
+    const h = this.house;
+    if (h.upstairs) {
+      out.push({
+        id: 'stairs',
+        kind: 'stairs',
+        a: { level: 0, x: 5.35, z: 5.45 },
+        b: { level: 1, x: 5.3, z: -0.75 },
+        // walk the steps: foot -> top landing -> through the bunk room door
+        path: [
+          { x: 5.35, z: 5.0, y: FLOOR0 },
+          { x: 5.35, z: 0.45, y: FLOOR0 + H },
+          { x: 5.3, z: -0.1, y: FLOOR0 + H },
+          { x: 5.3, z: -0.75, y: FLOOR0 + H },
+        ],
+      });
+    }
+    const attic = h.byId.attic;
+    if (attic && !attic.sealed) {
+      const below = attic.level - 1;
+      out.push({
+        id: 'ladder',
+        kind: 'ladder',
+        a: { level: below, x: 0.7, z: -4.75 },
+        b: { level: attic.level, x: 1.55, z: -4.6 },
+        path: [
+          { x: 0.7, z: -5.05, y: this.levelY(below) },
+          { x: 0.7, z: -5.05, y: attic.base + 0.05 },
+          { x: 1.55, z: -4.6, y: attic.base },
+        ],
+      });
+    }
+    return out;
   }
 
   _updateBounds() {
@@ -137,6 +236,15 @@ export class IslandWorld {
     const below = cam.position.y < 0.2;
     terrainCut.uCutOn.value = below ? 1 : 0;
     this.house.update(dt, cam, { focus: this.focus });
+    // actor/furniture levels ride along with the house's levels
+    this.levels.forEach((g, l) => {
+      const hg = this.house.levelGroups[l];
+      const k = hg?.userData.k ?? 1;
+      g.visible = k > 0.02;
+      g.position.y = (1 - k) * 2.5;
+    });
+    const under = this.furnish.kit('underside');
+    if (under) under.group.visible = cam.position.y < 0.6;
     this.house.setNight(this.daylight.state ? clamp(this.daylight.state.lamps, 0, 1) : 0);
     // rising land chunks
     for (const c of this.chunks.values()) {
@@ -159,6 +267,12 @@ export class IslandWorld {
       }
       this.mist?.userData.update(time, k);
     }
+    this.fx.update(dt);
+    if (!this._sway || this._swayN !== this.furnish.kits.size) {
+      this._swayN = this.furnish.kits.size;
+      this._sway = swayPlants([...this.furnish.kits.values()].flatMap((k) => k.plants));
+    }
+    this._sway(dt, time);
     const tint = this.daylight.state ? new THREE.Color(this.daylight.state.hemiSky).lerp(new THREE.Color('#ffffff'), 0.6) : null;
     this.clouds.userData.update(time, tint, below ? 0.7 : 1);
   }

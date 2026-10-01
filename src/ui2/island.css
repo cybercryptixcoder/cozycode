@@ -1,1 +1,23 @@
 @import '../ui/base.css';
+
+.ui {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+.ui .bubbles {
+  position: absolute;
+  inset: 0;
+}
+.ui .bubble {
+  border-bottom: 3px solid color-mix(in srgb, var(--tint, #ffb59a) 70%, white);
+  font-size: 14px;
+  text-transform: lowercase;
+}
+.ui .bubble.status {
+  background: #fffaf2;
+  font-family: var(--font);
+  font-weight: 500;
+  max-width: 220px;
+}

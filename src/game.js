@@ -1,22 +1,29 @@
 // Cozy Code — the island. (bootstrap)
 import './ui2/island.css';
-import { IslandWorld } from './island/world.js';
+import { Game } from './play/game.js';
+import { Store } from './play/state.js';
 
 async function main() {
   const params = new URLSearchParams(location.search);
-  const world = new IslandWorld(document.getElementById('app'));
+  const store = new Store();
+  if (params.has('fresh')) {
+    store.reset();
+    store.frozen = false;
+    store.data = store.load();
+  }
+  if (params.has('nosave')) store.frozen = true;
   const unlocks = {};
   for (const u of (params.get('unlock') || '').split(',').filter(Boolean)) unlocks[u] = Date.now();
   if (params.get('unlock') === 'all') for (const u of ['board', 'workshop', 'gate', 'study', 'kitchen', 'upstairs', 'garden', 'shed']) unlocks[u] = Date.now();
-  world.applyStructure(unlocks);
+  const game = new Game(document.getElementById('app'), { store, unlocks });
   const t = params.get('time');
-  if (t) world.daylight.setPreset(t);
-  world.engine.add((dt, time) => world.update(dt, time));
-  world.engine.start();
-  window.__world = world;
+  if (t) game.world.daylight.setPreset(t);
+  game.start();
+  window.__game = game;
+  window.__world = game.world;
   window.__step = (n = 1) => {
-    world.engine.stop();
-    world.engine.step(1 / 60, n);
+    game.world.engine.stop();
+    game.world.engine.step(1 / 60, n);
   };
   document.body.classList.add('ready');
 }
